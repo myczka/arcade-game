@@ -1,4 +1,4 @@
-# Arcade Game
+# SHOW ME YOUR SKILLS!!!
 The purpose of the project is to provide an interactive and engaging way to practice and measure response speed, accuracy, and short-term memory. It has three game modes:
 
 1. Accuracy Mode: The player presses the colored button matching the displayed prompt before time runs out. After a timed session, the screen shows points, incorrect presses, missed prompts, and the accuracy percentage.
