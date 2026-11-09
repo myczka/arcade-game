@@ -14,6 +14,7 @@ class GameManager {
     void update(float dt);
     void render();
     void stateTransition(GameState newState);
+    
    private:
     GameState* currentState;
 
