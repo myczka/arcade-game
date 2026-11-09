@@ -2,8 +2,6 @@
 
 #include <vector>
 
-#include "hardware/gpio.h"
-
 #include "button.h"
 #include "ir_remote.h"
 
