@@ -51,6 +51,7 @@ target_link_libraries(arcade-game
 # Add the standard include files to the build
 target_include_directories(arcade-game PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
+        ./src
 )
 
 # Add any user requested libraries
