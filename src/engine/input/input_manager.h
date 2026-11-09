@@ -12,8 +12,10 @@ class InputManager {
         void init();
         void update();
         
-        bool wasPressed(Color color);
-        bool isPressed(Color color);
+        // Prob only need wasPressed
+        bool wasPressed(Color color) const;
+        bool isHeld(Color color) const;
+        bool wasReleased(Color color) const;
 
 
     private:
