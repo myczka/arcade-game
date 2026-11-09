@@ -3,7 +3,9 @@
 #include <vector>
 
 #include "hardware/gpio.h"
+
 #include "button.h"
+#include "ir_remote.h"
 
 class InputManager {
     public:
@@ -20,6 +22,6 @@ class InputManager {
 
     private:
         std::vector<Button> buttons_;
-        IRReceiver ir_;
+        IRRemote ir_;
 
 };
