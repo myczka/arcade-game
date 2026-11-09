@@ -1,10 +1,10 @@
 #pragma once
+
 #include <cstdint>
-using namespace std;
 
 class IRRemote {
 public:
-    explicit IRRemote(std::uint8_t pin);    // Constructor for the IR remote
+    explicit IRRemote(uint8_t pin);    // Constructor for the IR remote
     
     void init();                   // Initialize the IR remote
     int  receiveCommand();         // Receive an IR command

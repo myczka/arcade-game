@@ -19,7 +19,7 @@ class InputManager {
         bool isHeld(Color color) const;
         bool wasReleased(Color color) const;
 
-
+        bool wasRemotePressed() const;
     private:
         std::vector<Button> buttons_;
         IRRemote ir_;
