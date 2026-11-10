@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdint>
+#include <pico/types.h>
+
 using namespace std;
 
 class IRRemote {
@@ -8,6 +10,7 @@ public:
     
     void init();                   // Initialize the IR remote
     int  receiveCommand();         // Receive an IR command
+    int  getLastReceivedCommand() const;
 
 private:
     // Used for handling GPIO events
