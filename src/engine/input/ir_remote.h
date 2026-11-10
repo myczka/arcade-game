@@ -1,34 +1,47 @@
 #pragma once
+
 #include <cstdint>
 #include <pico/types.h>
 
-using namespace std;
-
 class IRRemote {
 public:
-    explicit IRRemote(std::uint8_t pin);    // Constructor for the IR remote
-    
-    void init();                   // Initialize the IR remote
-    int  receiveCommand();         // Receive an IR command
+    // Creates an IR receiver attached to the specified GPIO pin.
+    explicit IRRemote(std::uint8_t pin);
+
+    // Configures the GPIO pin and enables edge-triggered interrupts.
+    void init();
+
+    // Returns a newly decoded command, or -1 when no command is ready.
+    int  receiveCommand();
+
+    // Returns the most recently decoded command.
     int  getLastReceivedCommand() const;
 
 private:
-    // Used for handling GPIO events
-    static void gpioCallback(uint gpio, uint32_t events);
-    void handleEvent(uint32_t events);
+    // Static adapter called by the Pico GPIO interrupt system.
+    static void gpioCallback(std::uint gpio, std::uint32_t events);
 
-    // Used for storing the pin number and tracking IR frame data
-    uint8_t pin;    
-    volatile bool frame_ready;
-    volatile bool last_edge_time;
+    // Records the time between signal edges while an NEC frame arrives.
+    void handleEvent(std::uint32_t events);
 
-    // Used for storing the pulse durations and count for the current IR frame
-    volatile uint32_t pulse_durations[100];
-    volatile uint8_t pulse_count;
-
-    // Used for storing the last received IR command
-    int  last_received_command;
-
-    // Used for decoding the current IR frame into a command
+    // Converts the captured NEC pulse timings into a command byte.
     int decodeFrame();
+
+    // GPIO pin connected to the IR receiver module.
+    std::uint8_t pin;
+
+    // Set by the interrupt handler when a complete frame is available.
+    volatile bool frame_ready;
+
+    // Timestamp of the previous GPIO edge, in microseconds.
+    volatile std::uint32_t last_edge_time;
+
+    // Pulse durations captured from the current NEC frame.
+    volatile std::uint32_t pulse_durations[100];
+
+    // Number of valid entries currently in pulse_durations.
+    volatile std::uint8_t pulse_count;
+
+    // Last valid command; -1 means no command has been decoded.
+    int last_received_command;
 };
