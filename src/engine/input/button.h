@@ -7,7 +7,8 @@ enum class Color {
     Red,
     Green,
     Blue,
-    Yellow
+    Yellow,
+    White
 };
 
 struct Button {

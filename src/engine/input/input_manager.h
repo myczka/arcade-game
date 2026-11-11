@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vector>
+#include <array>
 
 #include "button.h"
 #include "ir_remote.h"
 
 class InputManager {
     public:
-        InputManager();
+        InputManager(/*std::vector<Button> buttons, IRRemote ir*/);
 
         void init();
         void update();
@@ -19,7 +19,8 @@ class InputManager {
 
         bool wasRemotePressed() const;
     private:
-        std::vector<Button> buttons_;
-        IRRemote ir_;
+        // buttons vec should be defined in the engine because hardware inputs are hard-implemented?
+        std::array<Button, 5> buttons_ = {};
+        IRRemote* ir_;
 
 };
