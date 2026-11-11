@@ -20,7 +20,13 @@ class InputManager {
         bool wasRemotePressed() const;
     private:
         // buttons vec should be defined in the engine because hardware inputs are hard-implemented?
-        std::array<Button, 5> buttons_ = {};
-        IRRemote* ir_;
+        std::array<Button, 5> buttons_ = {
+            Button{Color::Red, RED_BTN_GPIO}, 
+            Button{Color::Green, GREEN_BTN_GPIO},
+            Button{Color::Blue, BLUE_BTN_GPIO},
+            Button{Color::Yellow, YELLOW_BTN_GPIO},
+            Button{Color::White, WHITE_BTN_GPIO},
+        };
+        IRRemote* ir_ = new IRRemote(REMOTE_GPIO);
 
 };

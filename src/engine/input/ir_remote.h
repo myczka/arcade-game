@@ -4,10 +4,12 @@
 #include <cstdint>
 #include <pico/types.h>
 
+constexpr uint32_t REMOTE_GPIO = 7;
+
 class IRRemote {
 public:
     // Creates an IR receiver attached to the specified GPIO pin.
-    explicit IRRemote(std::uint8_t pin);
+    explicit IRRemote(uint8_t pin);
 
     // Configures the GPIO pin and enables edge-triggered interrupts.
     void init();
@@ -20,7 +22,7 @@ public:
 
 private:
     // Static adapter called by the Pico GPIO interrupt system.
-    static void gpioCallback(std::uint gpio, std::uint32_t events);
+    static void gpioCallback(uint32_t gpio, std::uint32_t events);
 
     // Records the time between signal edges while an NEC frame arrives.
     void handleEvent(std::uint32_t events);

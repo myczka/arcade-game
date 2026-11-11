@@ -34,8 +34,12 @@ project(arcade-game C CXX ASM)
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
-
-add_executable(arcade-game src/main.cpp)
+add_executable(arcade-game
+    src/main.cpp
+    src/game.cpp
+    src/engine/input/input_manager.cpp
+    src/engine/input/ir_remote.cpp
+)
 
 pico_set_program_name(arcade-game "arcade-game")
 pico_set_program_version(arcade-game "0.1")
