@@ -39,6 +39,12 @@ add_executable(arcade-game
     src/game.cpp
     src/engine/input/input_manager.cpp
     src/engine/input/ir_remote.cpp
+    src/engine/output/screen.cpp
+    src/engine/output/display_manager.cpp
+    src/game/main_menu.cpp
+    src/game/accuracy.cpp
+    src/game/reaction.cpp
+    src/game/memory.cpp
 )
 
 pico_set_program_name(arcade-game "arcade-game")
