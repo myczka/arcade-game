@@ -4,32 +4,36 @@
 #include <cstdint>
 #include <pico/types.h>
 
+constexpr uint32_t REMOTE_GPIO = 7;
+
 class IRRemote {
 public:
     // Creates an IR receiver attached to the specified GPIO pin.
-    explicit IRRemote(std::uint8_t pin);
+    explicit IRRemote(uint8_t pin);
 
     // Configures the GPIO pin and enables edge-triggered interrupts.
     void init();
 
     // Returns a newly decoded command, or -1 when no command is ready.
-    int  receiveCommand();
+    bool  receivedCommand();
 
     // Returns the most recently decoded command.
-    int  getLastReceivedCommand() const;
+    int8_t  getLastReceivedCommand() const;
 
 private:
     // Static adapter called by the Pico GPIO interrupt system.
-    static void gpioCallback(std::uint gpio, std::uint32_t events);
+    static void gpioCallback(unsigned int gpio, std::uint32_t events);
 
     // Records the time between signal edges while an NEC frame arrives.
-    void handleEvent(std::uint32_t events);
+    void handleEvent(uint32_t events);
 
     // Converts the captured NEC pulse timings into a command byte.
     int decodeFrame();
 
     // GPIO pin connected to the IR receiver module.
     std::uint8_t pin;
+
+    //uint8_t received_command = NULL;
 
     // Set by the interrupt handler when a complete frame is available.
     volatile bool frame_ready;
@@ -44,5 +48,5 @@ private:
     volatile std::uint8_t pulse_count;
 
     // Last valid command; -1 means no command has been decoded.
-    int last_received_command;
+    int8_t last_received_command;
 };
