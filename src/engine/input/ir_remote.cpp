@@ -33,6 +33,7 @@ IRRemote::IRRemote(std::uint8_t pin)
     activeRemote = this;
 }
 
+    /* PUBLIC FUNCTIONS */
 // Configure the receiver input and listen for both signal edges.
 void IRRemote::init() {
     gpio_init(pin);
@@ -46,8 +47,34 @@ void IRRemote::init() {
         &IRRemote::gpioCallback);
 }
 
+// Decode a completed frame when the main program asks for a command.
+bool IRRemote::receivedCommand()
+{
+    if (!this->frame_ready)
+    {
+        return false;
+    }
+
+    int command = decodeFrame();
+
+    this->frame_ready = false;
+    this->pulse_count = 0;
+    if (command >= 0)
+    {
+        this->last_received_command = command;
+    }
+
+    return true;
+}
+
+// Return the last valid command received from the remote.
+int8_t IRRemote::getLastReceivedCommand() const {
+    return this->last_received_command;
+}
+
+    /* PRIVATE FUNCTIONS*/
 // Forward the GPIO interrupt to the active IRRemote object.
-void IRRemote::gpioCallback(std::uint gpio, std::uint32_t events) {
+void IRRemote::gpioCallback(unsigned int gpio, std::uint32_t events) {
     if (activeRemote != nullptr && gpio == activeRemote->pin) {
         activeRemote->handleEvent(events);
     }
@@ -77,27 +104,7 @@ void IRRemote::handleEvent(std::uint32_t) {
     }
 }
 
-// Decode a completed frame when the main program asks for a command.
-int IRRemote::receiveCommand() {
-    if (!frame_ready) {
-        return -1;
-    }
 
-    int command = decodeFrame();
-
-    frame_ready = false;
-    pulse_count = 0;
-    if (command >= 0) {
-        last_received_command = command;
-    }
-
-    return command;
-}
-
-// Return the last valid command received from the remote.
-int IRRemote::getLastReceivedCommand() const {
-    return last_received_command;
-}
 
 // Validate NEC timings and extract the command byte from the frame.
 int IRRemote::decodeFrame() {
