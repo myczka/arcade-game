@@ -25,7 +25,7 @@ private:
     static void gpioCallback(uint32_t gpio, std::uint32_t events);
 
     // Records the time between signal edges while an NEC frame arrives.
-    void handleEvent(std::uint32_t events);
+    void handleEvent(uint32_t events);
 
     // Converts the captured NEC pulse timings into a command byte.
     int decodeFrame();

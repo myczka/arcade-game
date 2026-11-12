@@ -47,7 +47,7 @@ void IRRemote::init() {
 }
 
 // Forward the GPIO interrupt to the active IRRemote object.
-void IRRemote::gpioCallback(std::uint gpio, std::uint32_t events) {
+void IRRemote::gpioCallback(uint32_t gpio, std::uint32_t events) {
     if (activeRemote != nullptr && gpio == activeRemote->pin) {
         activeRemote->handleEvent(events);
     }

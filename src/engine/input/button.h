@@ -14,11 +14,11 @@ enum class Color {
     Green,
     Blue,
     Yellow,
-    White
+    White,
+    Count
 };
 
 struct Button {
-    Color color;
     uint32_t pin;
     bool current = false;
     bool previous = false;
