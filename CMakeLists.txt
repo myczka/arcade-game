@@ -40,6 +40,8 @@ add_executable(arcade-game
     src/engine/input/input_manager.cpp
     src/engine/input/ir_remote.cpp
     src/engine/output/buzzer.cpp
+    src/engine/output/display_manager.cpp
+    src/engine/output/screen.cpp
 )
 
 pico_set_program_name(arcade-game "arcade-game")
@@ -65,7 +67,7 @@ target_link_libraries(arcade-game
 target_include_directories(arcade-game PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/third-party/pico-st7735/lib-st7735/include
-        ./src
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 target_compile_definitions(arcade-game PRIVATE
