@@ -12,12 +12,15 @@ class InputManager {
         void init();
         void update();
         
-        // Prob only need wasPressed
+        // Buttons
         bool wasPressed(Color color) const;
         bool isHeld(Color color) const;
         bool wasReleased(Color color) const;
 
-        bool wasRemotePressed() const;
+        // Remote
+        int getRemoteCommand() const;
+        int getLastRemoteCommand() const;
+
     private:
         // buttons vec should be defined in the engine because hardware inputs are hard-implemented?
         std::array<Button, static_cast<size_t>(Color::Count)> buttons_;
@@ -29,5 +32,7 @@ class InputManager {
         //     Button{Color::White, WHITE_BTN_GPIO},
         // };
         IRRemote* ir_ = new IRRemote(REMOTE_GPIO);
+
+        bool remote_pressed_ = false;
 
 };
