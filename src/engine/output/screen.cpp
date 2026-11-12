@@ -10,7 +10,6 @@ void Screen::init() {
     gpio_set_function(SPI_SCK, GPIO_FUNC_SPI);
     gpio_set_function(SPI_TX, GPIO_FUNC_SPI);
 
-    tft_spi_init();
     TFT_BlackTab_Initialize();
     setTextWrap(true);
 
