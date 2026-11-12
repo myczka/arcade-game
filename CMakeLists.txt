@@ -39,6 +39,7 @@ add_executable(arcade-game
     src/game.cpp
     src/engine/input/input_manager.cpp
     src/engine/input/ir_remote.cpp
+    src/engine/output/buzzer.cpp
 )
 
 pico_set_program_name(arcade-game "arcade-game")
@@ -56,6 +57,7 @@ target_link_libraries(arcade-game
         hardware_spi
         hardware_timer
         hardware_clocks
+        hardware_pwm
         st7735
         )
 
@@ -95,4 +97,3 @@ TFT_ENABLE_SHAPES
 )
 
 pico_add_extra_outputs(arcade-game)
-
