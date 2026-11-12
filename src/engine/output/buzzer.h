@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 class Buzzer {
 public:
     // Constructor
@@ -9,7 +11,8 @@ public:
     void init();
 
     // Functions to control the buzzer
-    void play(uint32_t frequency, uint32_t duration);
+    // Duration is measured in milliseconds.
+    void play(std::uint32_t frequency, std::uint32_t duration);
     void stop();
     void update();
 
@@ -23,6 +26,6 @@ private:
 
     // Indicates if the buzzer is currently playing and for how long
     bool     is_playing;
-    uint64_t stop_time;
+    std::uint64_t stop_time;
 
 };
