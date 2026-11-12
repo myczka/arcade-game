@@ -6,4 +6,4 @@ class Screen{
     public:
     
     void init(); //SPI config
-}
+};

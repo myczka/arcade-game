@@ -1,5 +1,6 @@
 #include "display_manager.h" 
 #include "screen.h"
+#include <cstdio>
 
 // Convert the gameplay color into its TFT drawing value.
 uint16_t DisplayManager::getTftColor(Color color) {
@@ -68,7 +69,7 @@ void DisplayManager::showMenu(int selected) {
 
 // Display instructions for the selected game and an ENTER prompt.
 void DisplayManager::showInstructions(int mode) {
-    fillScreen(ST7735_BLACK); // Clear the previous screen.
+    fillScreen(ST7735_BLACK); 
 
     drawRect(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
     drawLine(12, 32, 115, 32, ST7735_CYAN); // Heading separator.
@@ -101,5 +102,10 @@ void DisplayManager::showInstructions(int mode) {
     // Display the start instruction inside a yellow outline.
     drawRect(12, 130, 104, 22, ST7735_YELLOW);
     drawText(22, 137, "ENTER to start", ST7735_YELLOW, ST7735_BLACK, 1);
+}
+
+void DisplayManager::showAccuracyPrompt(Color target, unsigned secondsLeft){
+    fillScreen(ST7735_BLACK);
+
 }
 
