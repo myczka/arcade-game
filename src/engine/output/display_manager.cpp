@@ -25,9 +25,9 @@ uint16_t DisplayManager::getTftColor(Color color) {
 void DisplayManager::showTitle() {
     fillScreen(ST7735_BLACK); // Clear previous screen content.
 
-    drawRect(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
+    drawRectWH(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
 
-    drawRect(12, 48, 104, 32, ST7735_CYAN); // Box around the title.
+    drawRectWH(12, 48, 104, 32, ST7735_CYAN); // Box around the title.
     drawText(37, 60, "THE CAGES", ST7735_CYAN, ST7735_BLACK, 1);
 
     drawText(31, 100, "Press ENTER", ST7735_WHITE, ST7735_BLACK, 1);
@@ -38,27 +38,27 @@ void DisplayManager::showTitle() {
 void DisplayManager::showMenu(int selected) {
     fillScreen(ST7735_BLACK); // Clear the previous menu and selection box.
 
-    drawRect(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
+    drawRectWH(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
     drawText(34, 15, "CHALLENGES", ST7735_CYAN, ST7735_BLACK, 1);
     drawLine(12, 32, 115, 32, ST7735_CYAN); // Heading separator.
 
     // Highlight Accuracy when selected equals 0.
     if (selected == 0) {
-        drawRect(12, 45, 104, 24, ST7735_YELLOW);
+        drawRectWH(12, 45, 104, 24, ST7735_YELLOW);
     }
 
     drawText(40, 53, "Accuracy", selected == 0 ? ST7735_YELLOW : ST7735_WHITE, ST7735_BLACK, 1);
 
     // Highlight Reaction when selected equals 1.
     if (selected == 1) {
-        drawRect(12, 75, 104, 24, ST7735_YELLOW);
+        drawRectWH(12, 75, 104, 24, ST7735_YELLOW);
     }
 
     drawText(40, 83, "Reaction", selected == 1 ? ST7735_YELLOW : ST7735_WHITE, ST7735_BLACK, 1);
 
     // Highlight Memory when selected equals 2.
     if (selected == 2) {
-        drawRect(12, 105, 104, 24, ST7735_YELLOW);
+        drawRectWH(12, 105, 104, 24, ST7735_YELLOW);
     }
 
     drawText( 46, 113, "Memory", selected == 2 ? ST7735_YELLOW : ST7735_WHITE, ST7735_BLACK, 1);
@@ -71,7 +71,7 @@ void DisplayManager::showMenu(int selected) {
 void DisplayManager::showInstructions(int mode) {
     fillScreen(ST7735_BLACK); 
 
-    drawRect(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
+    drawRectWH(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
     drawLine(12, 32, 115, 32, ST7735_CYAN); // Heading separator.
 
     switch (mode) {
@@ -100,7 +100,7 @@ void DisplayManager::showInstructions(int mode) {
     }
 
     // Display the start instruction inside a yellow outline.
-    drawRect(12, 130, 104, 22, ST7735_YELLOW);
+    drawRectWH(12, 130, 104, 22, ST7735_YELLOW);
     drawText(22, 137, "ENTER to start", ST7735_YELLOW, ST7735_BLACK, 1);
 }
 
@@ -108,4 +108,3 @@ void DisplayManager::showAccuracyPrompt(Color target, unsigned secondsLeft){
     fillScreen(ST7735_BLACK);
 
 }
-

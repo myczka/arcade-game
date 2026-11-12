@@ -33,7 +33,7 @@ void Buzzer::play(std::uint32_t frequency, std::uint32_t duration) {
         static_cast<float>((clock_hz + denominator - 1) / denominator),
         1.0f,
         255.9375f);
-    const std::uint32_t top = std::min(
+    const std::uint32_t top = std::min<std::uint32_t>(
         static_cast<std::uint32_t>(
             static_cast<double>(clock_hz) /
                 (static_cast<double>(divider) * frequency) -
