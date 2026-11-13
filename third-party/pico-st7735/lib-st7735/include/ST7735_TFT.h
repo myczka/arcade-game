@@ -144,6 +144,11 @@ void Rcmd3();
 // Misc + Screen related
 void setAddrWindow(uint8_t , uint8_t , uint8_t , uint8_t );
 void fillScreen(uint16_t color);
+// Send a buffered region to the display; requires 128x160 portrait orientation.
+void presentRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
+// Row-major RGB565 pixels; transparent pixels leave the framebuffer unchanged.
+void drawBitmap(int16_t x, int16_t y, const uint16_t *pixels,
+                uint8_t w, uint8_t h, uint16_t transparent);
 void drawFastVLine(uint8_t x, uint8_t y, uint8_t h, uint16_t color);
 void drawFastHLine(uint8_t x, uint8_t y, uint8_t w, uint16_t color);
 void drawPixel(uint8_t , uint8_t , uint16_t );

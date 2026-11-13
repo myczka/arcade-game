@@ -222,62 +222,55 @@ void setAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1){
 }
 
 void fillRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color){
-  uint8_t hi, lo;
-  if((x >= _width) || (y >= _height))
+  if((x >= _width) || (y >= _height) || (w == 0) || (h == 0))
     return;
-  if((x + w - 1) >= _width)  
-    w = _width  - x;
-  if((y + h - 1) >= _height) 
+  if(w > _width - x)
+    w = _width - x;
+  if(h > _height - y)
     h = _height - y;
-  setAddrWindow(x, y, x+w-1, y+h-1);
-  hi = color >> 8; lo = color;
-  tft_dc_high();
-  tft_cs_low();
-  for(y=h; y>0; y--) {
-    for(x = w; x > 0; x--) {
-      spiwrite(hi);
-      spiwrite(lo);
+
+  for(uint16_t row = y; row < y + h; row++) {
+    for(uint16_t col = x; col < x + w; col++) {
+      framebuffer[row][col] = color;
     }
   }
-  tft_cs_high() ;
 }
 
 void fillScreen(uint16_t color) {
   fillRectangle(0, 0, _width, _height, color);
 }
 
-void drawFastHLine(uint8_t x, uint8_t y, uint8_t w, uint16_t color){
-  uint8_t hi, lo;
-  if((x >= _width) || (y >= _height))
+// Drawing changes RAM; presentation sends the finished region over SPI.
+void presentRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h){
+  if((x >= FB_WIDTH) || (y >= FB_HEIGHT) || (w == 0) || (h == 0))
     return;
-  if((x + w - 1) >= _width)
-    w = _width - x;
-  hi = color >> 8; lo = color;
-  setAddrWindow(x, y, x + w - 1, y);
+  if(w > FB_WIDTH - x)
+    w = FB_WIDTH - x;
+  if(h > FB_HEIGHT - y)
+    h = FB_HEIGHT - y;
+
+  uint8_t row_bytes[FB_WIDTH * 2];
+  setAddrWindow(x, y, x + w - 1, y + h - 1);
   tft_dc_high();
   tft_cs_low();
-  while (w--) {
-    spiwrite(hi);
-    spiwrite(lo);
+  for(uint16_t row = y; row < y + h; row++) {
+    for(uint16_t col = 0; col < w; col++) {
+      uint16_t color = framebuffer[row][x + col];
+      // The display expects the high byte of each RGB565 pixel first.
+      row_bytes[col * 2] = color >> 8;
+      row_bytes[col * 2 + 1] = color & 0xFF;
+    }
+    spi_write_blocking(SPI_TFT_PORT, row_bytes, w * 2);
   }
-  tft_cs_high() ;
+  tft_cs_high();
+}
+
+void drawFastHLine(uint8_t x, uint8_t y, uint8_t w, uint16_t color){
+  fillRectangle(x, y, w, 1, color);
 }
 
 void drawFastVLine(uint8_t x, uint8_t y, uint8_t h, uint16_t color){
-  uint8_t hi, lo;
-  if((x >= _width) || (y >= _height))
-    return;
-  if((y + h - 1) >= _height)
-    h = _height - y;
-  hi = color >> 8; lo = color;
-  setAddrWindow(x, y, x, y + h - 1);
-  tft_dc_high();
-  tft_cs_low();
-  while (h--) {
-    spiwrite(hi);
-    spiwrite(lo);
-  }
-  tft_cs_high() ;
+  fillRectangle(x, y, 1, h, color);
 }
 
 void fillRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color) {
@@ -290,9 +283,27 @@ void fillRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color) {
 void drawPixel(uint8_t x, uint8_t y, uint16_t color){
   if((x >= _width) || (y >= _height)) 
     return;
-  setAddrWindow(x,y,x+1,y+1);
-  write_data(color >> 8);
-  write_data(color & 0xFF);
+  framebuffer[y][x] = color;
+}
+
+void drawBitmap(int16_t x, int16_t y, const uint16_t *pixels,
+                uint8_t w, uint8_t h, uint16_t transparent){
+  if(pixels == NULL || w == 0 || h == 0)
+    return;
+
+  for(uint16_t row = 0; row < h; row++) {
+    int32_t screen_y = (int32_t)y + row;
+    if(screen_y < 0 || screen_y >= FB_HEIGHT)
+      continue;
+    for(uint16_t col = 0; col < w; col++) {
+      int32_t screen_x = (int32_t)x + col;
+      if(screen_x < 0 || screen_x >= FB_WIDTH)
+        continue;
+      uint16_t color = pixels[row * w + col];
+      if(color != transparent)
+        framebuffer[screen_y][screen_x] = color;
+    }
+  }
 }
 
 #if defined TFT_ENABLE_SHAPES

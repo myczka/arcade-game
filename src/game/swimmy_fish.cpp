@@ -1,7 +1,7 @@
-#include "accuracy.h"
+#include "swimmy_fish.h"
 #include "display_helpers.h"
 
-void Accuracy::render(DisplayManager& display, Color color, unsigned score, unsigned secondsLeft) {
+void SwimmyFish::render(DisplayManager& display, Color color, unsigned score, unsigned secondsLeft) {
     const char* name;
     std::uint16_t rgb;
     switch (color) {
@@ -19,7 +19,7 @@ void Accuracy::render(DisplayManager& display, Color color, unsigned score, unsi
     GameDisplay::number(display, 144, "Seconds: ", secondsLeft);
 }
 
-void Accuracy::showResults(DisplayManager& display, unsigned points, unsigned incorrect,
+void SwimmyFish::showResults(DisplayManager& display, unsigned points, unsigned incorrect,
                                          unsigned missed, unsigned correct) {
     GameDisplay::heading(display, "ACCURACY RESULTS");
     GameDisplay::number(display, 40, "Points: ", points);

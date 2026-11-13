@@ -3,7 +3,7 @@
 #include "engine/output/display_manager.h"
 #include "engine/input/button.h"
 
-class Accuracy {
+class SwimmyFish {
 public:
     void render(DisplayManager& display, Color color,
                            unsigned score, unsigned secondsLeft);
