@@ -39,8 +39,9 @@ add_executable(arcade-game
     src/game.cpp
     src/engine/input/input_manager.cpp
     src/engine/input/ir_remote.cpp
-    src/engine/output/screen.cpp
+    src/engine/output/buzzer.cpp
     src/engine/output/display_manager.cpp
+    src/engine/output/screen.cpp
     src/game/main_menu.cpp
     src/game/accuracy.cpp
     src/game/reaction.cpp
@@ -62,6 +63,7 @@ target_link_libraries(arcade-game
         hardware_spi
         hardware_timer
         hardware_clocks
+        hardware_pwm
         st7735
         )
 
@@ -69,7 +71,7 @@ target_link_libraries(arcade-game
 target_include_directories(arcade-game PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/third-party/pico-st7735/lib-st7735/include
-        ./src
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 target_compile_definitions(arcade-game PRIVATE
@@ -101,4 +103,3 @@ TFT_ENABLE_SHAPES
 )
 
 pico_add_extra_outputs(arcade-game)
-
