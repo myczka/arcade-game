@@ -1,4 +1,11 @@
 #include "screen.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "hw.h"
+#ifdef __cplusplus
+}
+#endif
 #include "hardware/spi.h" 
 #include "pico/stdlib.h"
 
@@ -11,6 +18,7 @@ void Screen::init() {
     gpio_set_function(SPI_TX, GPIO_FUNC_SPI);
 
     // Initialize the display's chip-select, data/command, and reset pins.
+    tft_spi_init();
     TFT_BlackTab_Initialize();
     setTextWrap(true);
 
