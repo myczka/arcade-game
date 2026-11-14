@@ -10,6 +10,7 @@ void Screen::init() {
     gpio_set_function(SPI_SCK, GPIO_FUNC_SPI);
     gpio_set_function(SPI_TX, GPIO_FUNC_SPI);
 
+    // Initialize the display's chip-select, data/command, and reset pins.
     TFT_BlackTab_Initialize();
     setTextWrap(true);
 
