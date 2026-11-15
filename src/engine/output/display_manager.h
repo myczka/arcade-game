@@ -2,9 +2,24 @@
 
 #include <stdint.h> // Provide uint16_t for TFT color values.
 #include "../input/button.h" 
+#include "screen.h"
 
 class DisplayManager{
 public:
+    void init();
+    void clear(std::uint16_t color = Screen::Black);
+    void present(std::uint8_t x = 0, std::uint8_t y = 0,
+                 std::uint8_t width = Screen::Width,
+                 std::uint8_t height = Screen::Height);
+    void drawRectangle(std::uint8_t x, std::uint8_t y, std::uint8_t width,
+                       std::uint8_t height, std::uint16_t color);
+    void drawSprite(std::int16_t x, std::int16_t y, const std::uint16_t* pixels,
+                    std::uint8_t width, std::uint8_t height,
+                    std::uint16_t transparent);
+    void drawText(std::uint8_t x, std::uint8_t y, const char* text,
+                  std::uint16_t color = Screen::White, std::uint8_t scale = 1,
+                  std::uint16_t background = Screen::Black);
+
     // Display the welcome screen and game title
     void showTitle();
 
@@ -55,21 +70,5 @@ public:
 private:
     // Convert Color::Blue, for example, into ST7735_BLUE for drawing.
     uint16_t getTftColor(Color color);
-};
-
-#include "screen.h"
-
-// Device-facing drawing only; game views choose text, layout, and colors.
-class DisplayManager {
-public:
-    void init();
-    void clear(std::uint16_t color = Screen::Black);
-    void drawRectangle(std::uint8_t x, std::uint8_t y, std::uint8_t width,
-                       std::uint8_t height, std::uint16_t color);
-    void drawText(std::uint8_t x, std::uint8_t y, const char* text,
-                  std::uint16_t color = Screen::White, std::uint8_t scale = 1,
-                  std::uint16_t background = Screen::Black);
-
-private:
     Screen screen_;
 };
