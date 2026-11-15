@@ -53,7 +53,7 @@ pico_set_program_version(arcade-game "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(arcade-game 0)
-pico_enable_stdio_usb(arcade-game 0)
+pico_enable_stdio_usb(arcade-game 1)
 
 add_subdirectory(third-party/pico-st7735/lib-st7735)
 

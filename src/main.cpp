@@ -1,52 +1,88 @@
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
+#include <array>
+
+#include "engine/input/button.h"
+#include "engine/input/ir_remote.h"
+#include "engine/output/buzzer.h"
+#include "engine/output/screen.h"
 #include "pico/stdlib.h"
-#include "hardware/spi.h"
-#include "hardware/timer.h"
-#include "hardware/clocks.h"
 
-// SPI Defines
-// We are going to use SPI 0, and allocate it to the following GPIO pins
-// Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
-#define SPI_PORT spi0
-#define PIN_MISO 16
-#define PIN_CS   17
-#define PIN_SCK  18
-#define PIN_MOSI 19
+constexpr unsigned int BUZZER_PIN = 8;
+constexpr std::uint32_t TEST_TONE_FREQUENCY = 250;
+constexpr std::uint32_t TEST_TONE_DURATION_MS = 100;
+constexpr std::uint64_t TEST_TONE_INTERVAL_US = 3000000;
 
-int64_t alarm_callback(alarm_id_t id, void *user_data) {
-    // Put your timeout handler code in here
-    return 0;
-}
-
-
-
-
-int main()
-{
+int main() {
     stdio_init_all();
 
-    // SPI initialisation. This example will use SPI at 1MHz.
-    spi_init(SPI_PORT, 1000*1000);
-    gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
-    gpio_set_function(PIN_CS,   GPIO_FUNC_SIO);
-    gpio_set_function(PIN_SCK,  GPIO_FUNC_SPI);
-    gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
-    
-    // Chip select is active-low, so we'll initialise it to a driven-high state
-    gpio_set_dir(PIN_CS, GPIO_OUT);
-    gpio_put(PIN_CS, 1);
-    // For more examples of SPI use see https://github.com/raspberrypi/pico-examples/tree/master/spi
+    Buzzer buzzer(BUZZER_PIN);
+    IRRemote remote(REMOTE_GPIO);
+    Screen screen;
 
-    // Timer example code - This example fires off the callback after 2000ms
-    add_alarm_in_ms(2000, alarm_callback, NULL, false);
-    // For more examples of timer use see https://github.com/raspberrypi/pico-examples/tree/master/timer
+    std::array<Button, static_cast<size_t>(Color::Count)> buttons = {
+        Button{RED_BTN_GPIO},
+        Button{GREEN_BTN_GPIO},
+        Button{BLUE_BTN_GPIO},
+        Button{YELLOW_BTN_GPIO},
+        Button{WHITE_BTN_GPIO},
+    };
 
-    printf("System Clock Frequency is %d Hz\n", clock_get_hz(clk_sys));
-    printf("USB Clock Frequency is %d Hz\n", clock_get_hz(clk_usb));
-    // For more examples of clocks use see https://github.com/raspberrypi/pico-examples/tree/master/clocks
+    for (Button& button : buttons) {
+        gpio_init(button.pin);
+        gpio_set_dir(button.pin, GPIO_IN);
+        gpio_pull_up(button.pin);
+        button.previous = gpio_get(button.pin);
+        button.current = button.previous;
+    }
+
+    buzzer.init();
+    remote.init();
+    screen.init();
+
+    printf("Buzzer and NEC IR test started.\n");
+    printf("Buzzer: GPIO %u, IR receiver: GPIO %u\n", BUZZER_PIN, REMOTE_GPIO);
+    printf("Buttons: Red GPIO %u, Green GPIO %u, Blue GPIO %u, "
+           "Yellow GPIO %u, White GPIO %u\n",
+           RED_BTN_GPIO,
+           GREEN_BTN_GPIO,
+           BLUE_BTN_GPIO,
+           YELLOW_BTN_GPIO,
+           WHITE_BTN_GPIO);
+
+    buzzer.play(TEST_TONE_FREQUENCY, TEST_TONE_DURATION_MS);
+    std::uint64_t nextToneTime = time_us_64() + TEST_TONE_INTERVAL_US;
+    constexpr const char* buttonNames[] = {
+        "Red", "Green", "Blue", "Yellow", "White"};
 
     while (true) {
-        printf("Hello, world!\n");
-        sleep_ms(1000);
+        buzzer.update();
+
+        for (std::size_t index = 0; index < buttons.size(); ++index) {
+            Button& button = buttons[index];
+            button.previous = button.current;
+            button.current = !gpio_get(button.pin);
+
+            if (button.current && !button.previous) {
+                buzzer.play(TEST_TONE_FREQUENCY, TEST_TONE_DURATION_MS);
+                printf("%s button pressed on GPIO %u.\n",
+                       buttonNames[index],
+                       button.pin);
+            }
+        }
+
+        if (remote.receivedCommand()) {
+            const int command = remote.getLastReceivedCommand();
+            printf("NEC command received: 0x%02X (%d)\n", command, command);
+        }
+
+        const std::uint64_t now = time_us_64();
+        if (now >= nextToneTime) {
+            buzzer.play(TEST_TONE_FREQUENCY, TEST_TONE_DURATION_MS);
+            nextToneTime = now + TEST_TONE_INTERVAL_US;
+            printf("Buzzer test tone played.\n");
+        }
+
+        sleep_ms(1);
     }
 }
