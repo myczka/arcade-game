@@ -39,6 +39,7 @@ enum class AppState {
     Instructions,
     Practice
 };
+constexpr std::uint64_t FrameDurationUs = 1000000 / 30;
 
 int main() {
     stdio_init_all();
@@ -55,8 +56,8 @@ int main() {
     buzzer.init();
     display.init();
 
+    std::uint64_t previousTime = time_us_64();
     while (true) {
-        static std::uint64_t previousTime = time_us_64();
         const std::uint64_t currentTime = time_us_64();
         const float deltaTime =
             static_cast<float>(currentTime - previousTime) / 1000000.0f;
@@ -139,6 +140,7 @@ int main() {
                 break;
         }
 
-        sleep_ms(16);
+        // Drawing and DMA transfer time are included in the 30 FPS budget.
+        sleep_until(from_us_since_boot(currentTime + FrameDurationUs));
     }
 }
