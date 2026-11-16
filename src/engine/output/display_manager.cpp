@@ -1,47 +1,11 @@
 #include "display_manager.h"
 
-#include <cstdio>
-
 #include "hardware/spi.h"
 #include "pico/stdlib.h"
 
 extern "C" {
 #include "ST7735_TFT.h"
 #include "hw.h"
-}
-
-void DisplayManager::heading(const char* title) {
-    clear();
-    drawRectWH(2, 2, 124, 156, ST7735_CYAN);
-    drawText(10, 15, title, ST7735_CYAN);
-    drawFastHLine(12, 32, 104, ST7735_CYAN);
-}
-
-void DisplayManager::statistic(std::uint8_t y, const char* label, unsigned value) {
-    char text[40];
-    std::snprintf(text, sizeof(text), "%s %u", label, value);
-    drawText(10, y, text);
-}
-
-// Convert the gameplay color into its TFT drawing value.
-std::uint16_t DisplayManager::getTftColor(Color color) {
-    switch (color) {
-        case Color::Red:
-            return ST7735_RED;
-
-        case Color::Green:
-            return ST7735_GREEN;
-
-        case Color::Blue:
-            return ST7735_BLUE;
-
-        case Color::Yellow:
-            return ST7735_YELLOW;
-        case Color::Count:
-            break;
-    }
-
-    return ST7735_BLACK; // Fallback for an unexpected color value.
 }
 
 // Display the welcome screen with a border and centered title.
@@ -66,26 +30,19 @@ void DisplayManager::showMenu(int selected) {
     drawText(34, 15, "CHALLENGES", ST7735_CYAN, 1, Black);
     drawLine(12, 32, 115, 32, ST7735_CYAN); // Heading separator.
 
-    // Highlight Accuracy when selected equals 0.
+    // Highlight Practice when selected equals 0.
     if (selected == 0) {
         drawRectWH(12, 45, 104, 24, ST7735_YELLOW);
     }
 
     drawText(40, 53, "PRACTICE", selected == 0 ? ST7735_YELLOW : ST7735_WHITE, 1, Black);
 
-    // Highlight Reaction when selected equals 1.
+    // Highlight Swimmy Fish when selected equals 1.
     if (selected == 1) {
         drawRectWH(12, 75, 104, 24, ST7735_YELLOW);
     }
 
     drawText(40, 83, "SWIMMY FISH", selected == 1 ? ST7735_YELLOW : ST7735_WHITE, 1, Black);
-
-    // Highlight Memory when selected equals 2.
-    if (selected == 2) {
-        drawRectWH(12, 105, 104, 24, ST7735_YELLOW);
-    }
-
-    drawText(46, 113, "Memory", selected == 2 ? ST7735_YELLOW : ST7735_WHITE, 1, Black);
 
     // Display the selection instruction beneath the game choices.
     drawText(19, 140, "ENTER to select", ST7735_WHITE, 1, Black);
@@ -100,27 +57,19 @@ void DisplayManager::showInstructions(int mode) {
     drawLine(12, 32, 115, 32, ST7735_CYAN); // Heading separator.
 
     switch (mode) {
-        case 0: // Accuracy instructions.
-            drawText(40, 15, "ACCURACY", ST7735_CYAN, 1, Black);
+        case 0: // Practice instructions.
+            drawText(40, 15, "PRACTICE", ST7735_CYAN, 1, Black);
             drawText(10, 50, "Press the matching", ST7735_WHITE, 1, Black);
-            drawText(19, 65, "colored button.", ST7735_WHITE, 1, Black);
-            drawText(13, 90, "Get as many right", ST7735_WHITE, 1, Black);
-            drawText(13, 105, "before time ends!", ST7735_WHITE, 1, Black);
+            drawText(19, 65, "colored button", ST7735_WHITE, 1, Black);
+            drawText(16, 90, "when notes reach", ST7735_WHITE, 1, Black);
+            drawText(19, 105, "the white zone.", ST7735_WHITE, 1, Black);
             break;
 
-        case 1: // Reaction instructions.
-            drawText(40, 15, "REACTION", ST7735_CYAN, 1, Black);
-            drawText(10, 55, "Wait for a circle.", ST7735_WHITE, 1, Black);
-            drawText(10, 80, "Press its matching", ST7735_WHITE, 1, Black);
-            drawText(19, 95, "button quickly!", ST7735_WHITE, 1, Black);
-            break;
-
-        case 2: // Memory instructions.
-            drawText(46, 15, "MEMORY", ST7735_CYAN, 1, Black);
-            drawText(13, 45, "Watch the colors.", ST7735_WHITE, 1, Black);
-            drawText(7, 65, "Repeat the sequence", ST7735_WHITE, 1, Black);
-            drawText(10, 80, "using the buttons.", ST7735_WHITE, 1, Black);
-            drawText(19, 105, "Beat the timer!", ST7735_WHITE, 1, Black);
+        case 1: // Swimmy Fish instructions.
+            drawText(31, 15, "SWIMMY FISH", ST7735_CYAN, 1, Black);
+            drawText(10, 55, "Swim through gaps.", ST7735_WHITE, 1, Black);
+            drawText(16, 80, "Avoid the pipes.", ST7735_WHITE, 1, Black);
+            drawText(7, 105, "Pass pipes to score", ST7735_WHITE, 1, Black);
             break;
     }
 
@@ -128,84 +77,6 @@ void DisplayManager::showInstructions(int mode) {
     drawRectWH(12, 130, 104, 22, ST7735_YELLOW);
     drawText(22, 137, "ENTER to start", ST7735_YELLOW, 1, Black);
     present();
-}
-
-void DisplayManager::showAccuracyPrompt(Color target, unsigned secondsLeft) {
-    heading("ACCURACY");
-    drawRectangle(24, 48, 80, 48, getTftColor(target));
-    statistic(112, "Seconds:", secondsLeft);
-    drawText(10, 136, "Match the color");
-    present();
-}
-
-void DisplayManager::showAccuracyResults(unsigned correct, unsigned missed,
-                                         int score, unsigned accuracyPercent) {
-    heading("ACCURACY RESULTS");
-    statistic(44, "Correct:", correct);
-    statistic(63, "Missed:", missed);
-    char text[40];
-    std::snprintf(text, sizeof(text), "Score: %d", score);
-    drawText(10, 82, text);
-    std::snprintf(text, sizeof(text), "Accuracy: %u%%", accuracyPercent);
-    drawText(10, 101, text);
-    showResultOptions(0);
-}
-
-void DisplayManager::showReactionReady() {
-    heading("REACTION");
-    drawText(10, 55, "Get ready", ST7735_YELLOW, 2);
-    drawText(10, 90, "Wait for a circle");
-    present();
-}
-
-void DisplayManager::showReactionPrompt(Color target) {
-    heading("REACTION");
-    fillCircle(64, 74, 26, getTftColor(target));
-    drawText(10, 115, "Match the color!");
-    present();
-}
-
-void DisplayManager::showReactionResults(float milliseconds) {
-    heading("REACTION RESULTS");
-    char text[40];
-    std::snprintf(text, sizeof(text), "Time: %.1f ms", milliseconds);
-    drawText(10, 65, text);
-    showResultOptions(0);
-}
-
-void DisplayManager::showMemoryColor(Color color, unsigned round,
-                                    unsigned secondsLeft) {
-    heading("MEMORY");
-    drawText(10, 38, "Watch the colors");
-    drawRectangle(24, 54, 80, 44, getTftColor(color));
-    statistic(111, "Round:", round);
-    statistic(132, "Seconds:", secondsLeft);
-    present();
-}
-
-void DisplayManager::clearMemoryColor() {
-    drawRectangle(24, 54, 80, 44, Black);
-    present(24, 54, 80, 44);
-}
-
-void DisplayManager::showMemoryTurn(unsigned round, unsigned secondsLeft) {
-    heading("MEMORY");
-    drawText(10, 60, "Your turn", ST7735_YELLOW, 2);
-    statistic(111, "Round:", round);
-    statistic(132, "Seconds:", secondsLeft);
-    present();
-}
-
-void DisplayManager::showMemoryResults(unsigned correct, unsigned missed,
-                                      int score, unsigned longestSequence) {
-    heading("MEMORY RESULTS");
-    statistic(44, "Correct:", correct);
-    statistic(63, "Missed:", missed);
-    char text[40];
-    std::snprintf(text, sizeof(text), "Score: %d", score);
-    drawText(10, 82, text);
-    statistic(101, "Longest:", longestSequence);
-    showResultOptions(0);
 }
 
 void DisplayManager::showResultOptions(int selected) {
@@ -251,9 +122,8 @@ void DisplayManager::drawRectangle(std::int16_t x, std::int16_t y,
 
 void DisplayManager::drawSprite(std::int16_t x, std::int16_t y,
                                 const std::uint16_t* pixels,
-                                std::uint8_t width, std::uint8_t height,
-                                std::uint16_t transparent) {
-    drawBitmap(x, y, pixels, width, height, transparent);
+                                std::uint8_t width, std::uint8_t height) {
+    drawBitmap(x, y, pixels, width, height, Transparent);
 }
 
 void DisplayManager::drawText(std::uint8_t x, std::uint8_t y, const char* text,
