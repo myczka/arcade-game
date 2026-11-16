@@ -34,6 +34,7 @@ enum class AppState {
     Practice
 };
 constexpr std::uint64_t FrameDurationUs = 1000000 / 30;
+constexpr int MenuOptionCount = static_cast<int>(MenuOption::Count);
 
 int main() {
     stdio_init_all();
@@ -43,7 +44,7 @@ int main() {
     Buzzer buzzer(BuzzerPin);
     Practice practice(input, display, buzzer);
     AppState state = AppState::Title;
-    MenuOption selected = MenuOption::Accuracy;
+    MenuOption selected = MenuOption::Practice;
     bool screenNeedsUpdate = true;
 
     input.init();
@@ -80,11 +81,11 @@ int main() {
             case AppState::Menu:
                 if (isRemoteUp(command)) {
                     selected = static_cast<MenuOption>(
-                        (static_cast<int>(selected) + 2) % 3);
+                        (static_cast<int>(selected) + MenuOptionCount - 1) % MenuOptionCount);
                     screenNeedsUpdate = true;
                 } else if (isRemoteDown(command)) {
                     selected = static_cast<MenuOption>(
-                        (static_cast<int>(selected) + 1) % 3);
+                        (static_cast<int>(selected) + 1) % MenuOptionCount);
                     screenNeedsUpdate = true;
                 } else if (isRemoteEnter(command)) {
                     state = AppState::Instructions;
@@ -105,7 +106,7 @@ int main() {
                     screenNeedsUpdate = false;
                 }
                 if (isRemoteEnter(command)) {
-                    if (selected == MenuOption::Accuracy) {
+                    if (selected == MenuOption::Practice) {
                         practice.start();
                         state = AppState::Practice;
                     } else {
