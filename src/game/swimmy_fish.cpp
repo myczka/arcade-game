@@ -9,7 +9,6 @@ void SwimmyFish::render(DisplayManager& display, Color color, unsigned score, un
         case Color::Green: name = "GREEN"; rgb = 0x07e0; break;
         case Color::Blue: name = "BLUE"; rgb = 0x001f; break;
         case Color::Yellow: name = "YELLOW"; rgb = 0xffe0; break;
-        case Color::White: name = "WHITE"; rgb = 0xffff; break;
         default: GameDisplay::message(display, "Input", "Invalid color"); return;
     }
     GameDisplay::heading(display, "PRESS THE COLOR");

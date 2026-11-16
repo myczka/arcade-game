@@ -7,7 +7,6 @@ InputManager::InputManager() {
     buttons_.at(static_cast<size_t>(Color::Red)) = Button{RED_BTN_GPIO};
     buttons_.at(static_cast<size_t>(Color::Green)) = Button{GREEN_BTN_GPIO};
     buttons_.at(static_cast<size_t>(Color::Blue)) = Button{BLUE_BTN_GPIO};
-    buttons_.at(static_cast<size_t>(Color::White)) = Button{WHITE_BTN_GPIO};
     buttons_.at(static_cast<size_t>(Color::Yellow)) = Button{YELLOW_BTN_GPIO};
 }
 
