@@ -59,6 +59,7 @@ add_subdirectory(third-party/pico-st7735/lib-st7735)
 # Add the standard library to the build
 target_link_libraries(arcade-game
         pico_stdlib
+        pico_rand
         hardware_spi
         hardware_timer
         hardware_clocks

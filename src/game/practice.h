@@ -47,5 +47,4 @@ private:
     unsigned hits_ = 0;
     unsigned misses_ = 0;
     bool running_ = false;
-    std::uint32_t randomState_ = 0x13579bdfu;
 };

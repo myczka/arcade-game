@@ -2,11 +2,13 @@
 
 #include <cstdio>
 
+#include "pico/rand.h"
+
 namespace {
 constexpr std::uint16_t Red = 0xf800;
-constexpr std::uint16_t Green = 0x07e0;
+constexpr std::uint16_t Green = 0x03e0;
 constexpr std::uint16_t Blue = 0x001f;
-constexpr std::uint16_t Yellow = 0xffe0;
+constexpr std::uint16_t Yellow = 0xfc00;
 constexpr std::uint16_t TargetColor = 0xffff;
 
 constexpr std::uint8_t NoteY = 124;
@@ -47,7 +49,6 @@ void Practice::start() {
     hits_ = 0;
     misses_ = 0;
     running_ = true;
-    randomState_ = 0x13579bdfu;
 }
 
 void Practice::update(float dt) {
@@ -125,9 +126,8 @@ unsigned Practice::accuracyPercent() const {
 void Practice::spawnNote() {
     for (Note& note : notes_) {
         if (!note.active) {
-            randomState_ = randomState_ * 1664525u + 1013904223u;
             note.color = static_cast<Color>(
-                randomState_ % 4u);
+                get_rand_32() % 4u);
             note.x = 128.0f;
             note.active = true;
             return;
