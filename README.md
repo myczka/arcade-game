@@ -1,11 +1,9 @@
-# SHOW ME YOUR SKILLS!!!
-The purpose of the project is to provide an interactive and engaging way to practice and measure response speed, accuracy, and short-term memory. It has three game modes:
+# Practice and Swimmy Fish
 
-1. Accuracy Mode: The player presses the colored button matching the displayed prompt before time runs out. After a timed session, the screen shows points, incorrect presses, missed prompts, and the accuracy percentage.
+A Raspberry Pi Pico arcade project with two game modes:
 
-2. Reaction Mode: The player presses a specific color shown on the screen as quickly as possible. The screen displays reaction time in milliseconds, and pressing before the green signal counts as a false start.
-
-3. Memory Mode: The player watches a sequence of colors and then repeats it using the colored buttons. Each correct sequence earns points and adds another color. The game ends after an incorrect response and displays the final score and longest sequence completed.
+1. Practice: Colored notes scroll toward a white hit zone. Press the matching button as a note reaches the zone. A timed round tracks hits, misses, and accuracy.
+2. Swimmy Fish: A Flappy Bird-style game in development. Guide the fish through pipe gaps and score by passing obstacles.
 
 ## Inputs
 - Colored push buttons
@@ -13,7 +11,6 @@ The purpose of the project is to provide an interactive and engaging way to prac
 
 ## Outputs
 - TFT display instructions and results
-- Colored LED signals
 - Buzzer feedback
 
 ## Expected Final Behavior
