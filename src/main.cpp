@@ -6,6 +6,7 @@
 #include "engine/output/display_manager.h"
 #include "game/main_menu.h"
 #include "game/practice.h"
+#include "game/swimmy_fish.h"
 #include "pico/stdlib.h"
 
 constexpr unsigned int BuzzerPin = 8;
@@ -37,7 +38,8 @@ enum class AppState {
     Title,
     Menu,
     Instructions,
-    Practice
+    Practice,
+    SwimmyFish
 };
 constexpr std::uint64_t FrameDurationUs = 1000000 / 30;
 constexpr int MenuOptionCount = static_cast<int>(MenuOption::Count);
@@ -49,6 +51,7 @@ int main() {
     DisplayManager display;
     Buzzer buzzer(BuzzerPin);
     Practice practice(input, display, buzzer);
+    SwimmyFish swimmyFish(input, display, buzzer);
     AppState state = AppState::Title;
     MenuOption selected = MenuOption::Practice;
     bool screenNeedsUpdate = true;
@@ -94,9 +97,12 @@ int main() {
                         (static_cast<int>(selected) + 1) % MenuOptionCount);
                     screenNeedsUpdate = true;
                 } else if (isRemoteEnter(command)) {
-                    if (selected == MenuOption::Accuracy) {
+                    if (selected == MenuOption::Practice) {
                         practice.start();
                         state = AppState::Practice;
+                    } else if (selected == MenuOption::SwimmyFish) {
+                        swimmyFish.start();
+                        state = AppState::SwimmyFish;
                     } else {
                         state = AppState::Instructions;
                     }
@@ -120,6 +126,9 @@ int main() {
                     if (selected == MenuOption::Practice) {
                         practice.start();
                         state = AppState::Practice;
+                    } else if (selected == MenuOption::SwimmyFish) {
+                        swimmyFish.start();
+                        state = AppState::SwimmyFish;
                     } else {
                         state = AppState::Menu;
                     }
@@ -136,6 +145,19 @@ int main() {
                     practice.render();
                     if (practice.isFinished()) {
                         practice.start();
+                    }
+                }
+                break;
+
+            case AppState::SwimmyFish:
+                if (isRemoteExit(command)) {
+                    state = AppState::Menu;
+                    screenNeedsUpdate = true;
+                } else {
+                    swimmyFish.update(deltaTime);
+                    swimmyFish.render();
+                    if (swimmyFish.isFinished()) {
+                        swimmyFish.start();
                     }
                 }
                 break;
