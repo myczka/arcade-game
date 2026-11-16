@@ -37,8 +37,6 @@ std::uint16_t DisplayManager::getTftColor(Color color) {
 
         case Color::Yellow:
             return ST7735_YELLOW;
-        case Color::White:
-            return ST7735_WHITE;
         case Color::Count:
             break;
     }
