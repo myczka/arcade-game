@@ -12,11 +12,16 @@ constexpr std::uint32_t NEC_ZERO_HIGH_US = 560;
 constexpr std::uint32_t NEC_ONE_HIGH_US = 1690;
 constexpr std::uint32_t NEC_REPEAT_HIGH_US = 2250;
 constexpr std::uint32_t NEC_TOLERANCE_US = 250;
+constexpr std::uint8_t NEC_FRAME_PULSES = 66;
+constexpr std::uint8_t NEC_REPEAT_PULSES = 3;
+constexpr std::uint32_t IR_COMMAND_COOLDOWN_US = 150000;
 
-bool within(std::uint32_t value, std::uint32_t expected) {
+bool within(std::uint32_t value, std::uint32_t expected,
+            std::uint32_t tolerance = NEC_TOLERANCE_US) {
     // Accept timing variation caused by the remote and receiver hardware.
-    return value >= expected - NEC_TOLERANCE_US &&
-           value <= expected + NEC_TOLERANCE_US;
+    const std::uint32_t minimum =
+        expected > tolerance ? expected - tolerance : 0;
+    return value >= minimum && value <= expected + tolerance;
 }
 }
 
@@ -27,9 +32,12 @@ static IRRemote* activeRemote = nullptr;
 IRRemote::IRRemote(std::uint8_t pin)
     : pin(pin),
       frame_ready(false),
+      capturing_frame(false),
       last_edge_time(0),
       pulse_count(0),
-      last_received_command(-1) {
+      last_received_command(-1),
+      last_command_time_us(0),
+      has_received_command(false) {
     activeRemote = this;
 }
 
@@ -58,13 +66,23 @@ bool IRRemote::receivedCommand()
     int command = decodeFrame();
 
     this->frame_ready = false;
+    this->capturing_frame = false;
     this->pulse_count = 0;
     if (command >= 0)
     {
+        const std::uint32_t now = time_us_32();
+        if (has_received_command &&
+            command == last_received_command &&
+            now - last_command_time_us < IR_COMMAND_COOLDOWN_US) {
+            return false;
+        }
+
         this->last_received_command = command;
+        this->last_command_time_us = now;
+        this->has_received_command = true;
     }
 
-    return true;
+    return command >= 0;
 }
 
 // Return the last valid command received from the remote.
@@ -92,15 +110,28 @@ void IRRemote::handleEvent(std::uint32_t) {
     last_edge_time = now;
 
     if (duration > NEC_FRAME_GAP_US) {
-        if (pulse_count > 0) {
-            frame_ready = true;
-        }
+        capturing_frame = true;
+        pulse_count = 0;
+        return;
+    }
+
+    if (!capturing_frame) {
         return;
     }
 
     if (pulse_count < 100) {
         pulse_durations[pulse_count] = duration;
         pulse_count++;
+
+        const bool repeat_frame =
+            pulse_count == NEC_REPEAT_PULSES &&
+            within(pulse_durations[0], NEC_LEADER_LOW_US, 1000) &&
+            within(pulse_durations[1], NEC_REPEAT_HIGH_US, 500) &&
+            within(pulse_durations[2], NEC_BIT_LOW_US);
+        if (pulse_count == NEC_FRAME_PULSES || repeat_frame) {
+            frame_ready = true;
+            capturing_frame = false;
+        }
     }
 }
 
@@ -115,9 +146,9 @@ int IRRemote::decodeFrame() {
         return last_received_command;
     }
 
-    if (pulse_count < 66 ||
-        !within(pulse_durations[0], NEC_LEADER_LOW_US) ||
-        !within(pulse_durations[1], NEC_LEADER_HIGH_US)) {
+    if (pulse_count < NEC_FRAME_PULSES ||
+        !within(pulse_durations[0], NEC_LEADER_LOW_US, 1000) ||
+        !within(pulse_durations[1], NEC_LEADER_HIGH_US, 600)) {
         return -1;
     }
 

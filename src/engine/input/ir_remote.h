@@ -38,6 +38,9 @@ private:
     // Set by the interrupt handler when a complete frame is available.
     volatile bool frame_ready;
 
+    // Indicates that the receiver is currently capturing a NEC frame.
+    volatile bool capturing_frame;
+
     // Timestamp of the previous GPIO edge, in microseconds.
     volatile std::uint32_t last_edge_time;
 
@@ -49,4 +52,9 @@ private:
 
     // Last valid command; -1 means no command has been decoded.
     int8_t last_received_command;
+
+    // Time when the last command was accepted, used to debounce repeats.
+    std::uint32_t last_command_time_us;
+
+    bool has_received_command;
 };

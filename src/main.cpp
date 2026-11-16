@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstdio>
 
 #include "engine/input/input_manager.h"
 #include "engine/output/buzzer.h"
@@ -11,6 +12,20 @@ constexpr unsigned int BuzzerPin = 8;
 constexpr int RemoteUp = 0x18;
 constexpr int RemoteDown = 0x52;
 constexpr int RemoteEnter = 0x1c;
+constexpr int RemoteLeft = 0x08;
+constexpr int RemoteRight = 0x5a;
+
+bool isRemoteUp(int command) {
+    return command == 0x18 || command == 0x46;
+}
+
+bool isRemoteDown(int command) {
+    return command == 0x52 || command == 0x15;
+}
+
+bool isRemoteEnter(int command) {
+    return command == RemoteEnter || command == 0x1c;
+}
 
 enum class AppState {
     Title,
@@ -45,6 +60,9 @@ int main() {
         buzzer.update();
 
         const int command = input.getRemoteCommand();
+        if (command >= 0) {
+            std::printf("IR command: 0x%02X\n", command);
+        }
 
         switch (state) {
             case AppState::Title:
@@ -52,24 +70,26 @@ int main() {
                     display.showTitle();
                     screenNeedsUpdate = false;
                 }
-                if (command >= 0) {
+                if (isRemoteEnter(command)) {
                     state = AppState::Menu;
                     screenNeedsUpdate = true;
                 }
                 break;
 
             case AppState::Menu:
-                if (command == RemoteUp) {
+                if (isRemoteUp(command)) {
                     selected = static_cast<MenuOption>(
                         (static_cast<int>(selected) + 2) % 3);
                     screenNeedsUpdate = true;
-                } else if (command == RemoteDown) {
+                } else if (isRemoteDown(command)) {
                     selected = static_cast<MenuOption>(
                         (static_cast<int>(selected) + 1) % 3);
                     screenNeedsUpdate = true;
-                } else if (command == RemoteEnter) {
+                } else if (isRemoteEnter(command)) {
                     state = AppState::Instructions;
                     screenNeedsUpdate = true;
+                } else if (command == RemoteLeft || command == RemoteRight) {
+                    // Horizontal navigation is intentionally disabled.
                 }
 
                 if (screenNeedsUpdate) {
@@ -83,7 +103,7 @@ int main() {
                     display.showInstructions(static_cast<int>(selected));
                     screenNeedsUpdate = false;
                 }
-                if (command == RemoteEnter) {
+                if (isRemoteEnter(command)) {
                     if (selected == MenuOption::Accuracy) {
                         practice.start();
                         state = AppState::Practice;
