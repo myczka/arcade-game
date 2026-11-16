@@ -1,10 +1,9 @@
 #pragma once
 
 enum class GameState {
-    MainMenuState,
-    ReactionState,
-    AccuracyState,
-    MemoryState,
+    MainMenu,
+    PracticeGame,
+    SwimmyFish,
     GameComplete
 };
 
