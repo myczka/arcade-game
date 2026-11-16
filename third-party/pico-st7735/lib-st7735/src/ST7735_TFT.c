@@ -221,13 +221,16 @@ void setAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1){
   write_command(ST7735_RAMWR); // Write to RAM
 }
 
-void fillRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color){
-  if((x >= _width) || (y >= _height) || (w == 0) || (h == 0))
+void fillRectangle(int16_t x, int16_t y, uint8_t w, uint8_t h, uint16_t color){
+  if(x >= FB_WIDTH || y >= FB_HEIGHT || w == 0 || h == 0 ||
+     (int32_t)x + w <= 0 || (int32_t)y + h <= 0)
     return;
-  if(w > _width - x)
-    w = _width - x;
-  if(h > _height - y)
-    h = _height - y;
+  if(x < 0) { w += x; x = 0; }
+  if(y < 0) { h += y; y = 0; }
+  if(w > FB_WIDTH - x)
+    w = FB_WIDTH - x;
+  if(h > FB_HEIGHT - y)
+    h = FB_HEIGHT - y;
 
   for(uint16_t row = y; row < y + h; row++) {
     for(uint16_t col = x; col < x + w; col++) {
@@ -241,47 +244,38 @@ void fillScreen(uint16_t color) {
 }
 
 // Drawing changes RAM; presentation sends the finished region over SPI.
-void presentRectangle(uint8_t x, uint8_t y, uint8_t w, uint8_t h){
-  if((x >= FB_WIDTH) || (y >= FB_HEIGHT) || (w == 0) || (h == 0))
+void presentRectangle(int16_t x, int16_t y, uint8_t w, uint8_t h){
+  if(x >= FB_WIDTH || y >= FB_HEIGHT || w == 0 || h == 0 ||
+     (int32_t)x + w <= 0 || (int32_t)y + h <= 0)
     return;
+  if(x < 0) { w += x; x = 0; }
+  if(y < 0) { h += y; y = 0; }
   if(w > FB_WIDTH - x)
     w = FB_WIDTH - x;
   if(h > FB_HEIGHT - y)
     h = FB_HEIGHT - y;
 
-  uint8_t row_bytes[FB_WIDTH * 2];
   setAddrWindow(x, y, x + w - 1, y + h - 1);
   tft_dc_high();
   tft_cs_low();
-  for(uint16_t row = y; row < y + h; row++) {
-    for(uint16_t col = 0; col < w; col++) {
-      uint16_t color = framebuffer[row][x + col];
-      // The display expects the high byte of each RGB565 pixel first.
-      row_bytes[col * 2] = color >> 8;
-      row_bytes[col * 2 + 1] = color & 0xFF;
-    }
-    spi_write_blocking(SPI_TFT_PORT, row_bytes, w * 2);
-  }
+  tft_write_pixels(&framebuffer[y][x], w, h, FB_WIDTH);
   tft_cs_high();
 }
 
-void drawFastHLine(uint8_t x, uint8_t y, uint8_t w, uint16_t color){
+void drawFastHLine(int16_t x, int16_t y, uint8_t w, uint16_t color){
   fillRectangle(x, y, w, 1, color);
 }
 
-void drawFastVLine(uint8_t x, uint8_t y, uint8_t h, uint16_t color){
+void drawFastVLine(int16_t x, int16_t y, uint8_t h, uint16_t color){
   fillRectangle(x, y, 1, h, color);
 }
 
-void fillRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color) {
-  int16_t i;
-  for (i = x; i < x + w; i++) {
-    drawFastVLine(i, y, h, color);
-  }
+void fillRect(int16_t x, int16_t y, uint8_t w, uint8_t h, uint16_t color) {
+  fillRectangle(x, y, w, h, color);
 }
 
-void drawPixel(uint8_t x, uint8_t y, uint16_t color){
-  if((x >= _width) || (y >= _height)) 
+void drawPixel(int16_t x, int16_t y, uint16_t color){
+  if(x < 0 || y < 0 || x >= FB_WIDTH || y >= FB_HEIGHT)
     return;
   framebuffer[y][x] = color;
 }

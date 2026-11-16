@@ -32,8 +32,11 @@ private:
     static constexpr float HitZoneRight = 24.0f;
     static constexpr float NoteWidth = 8.0f;
     static constexpr float GameDuration = 30.0f;
+    // Leave enough time for the final note to travel fully off-screen.
+    static constexpr float LastSpawnTime = GameDuration -
+        (DisplayManager::Width + NoteWidth) / NoteSpeed;
 
-    void spawnNote();
+    void spawnNote(float age);
     void resolveInput();
     bool tryHit(Color color);
     void removeMissedNotes();
@@ -47,4 +50,7 @@ private:
     unsigned hits_ = 0;
     unsigned misses_ = 0;
     bool running_ = false;
+    bool fullPresentNeeded_ = true;
+    unsigned displayedAccuracy_ = 0;
+    unsigned displayedRemaining_ = 0;
 };

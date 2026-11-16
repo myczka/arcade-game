@@ -1,6 +1,8 @@
 #include "practice.h"
 
 #include <cstdio>
+#include <algorithm>
+#include <cmath>
 
 #include "pico/rand.h"
 
@@ -49,6 +51,7 @@ void Practice::start() {
     hits_ = 0;
     misses_ = 0;
     running_ = true;
+    fullPresentNeeded_ = true;
 }
 
 void Practice::update(float dt) {
@@ -56,18 +59,23 @@ void Practice::update(float dt) {
         return;
     }
 
+    dt = std::min(dt, GameDuration - elapsed_);
     elapsed_ += dt;
-    spawnTimer_ -= dt;
-
-    while (spawnTimer_ <= 0.0f) {
-        spawnNote();
-        spawnTimer_ += SpawnInterval;
-    }
 
     for (Note& note : notes_) {
         if (note.active) {
             note.x -= NoteSpeed * dt;
         }
+    }
+
+    spawnTimer_ -= dt;
+    while (spawnTimer_ <= 0.0f) {
+        const float spawnTime = elapsed_ + spawnTimer_;
+        if (spawnTime <= LastSpawnTime) {
+            // Account for the part of this frame since the scheduled spawn.
+            spawnNote(-spawnTimer_);
+        }
+        spawnTimer_ += SpawnInterval;
     }
 
     resolveInput();
@@ -88,19 +96,21 @@ void Practice::render() {
     display_.clear();
     display_.drawText(4, 4, "PRACTICE");
 
+    const unsigned accuracy = accuracyPercent();
     char buffer[24];
-    std::snprintf(buffer, sizeof(buffer), "ACC %u%%", accuracyPercent());
+    std::snprintf(buffer, sizeof(buffer), "ACC %u%%", accuracy);
     display_.drawText(76, 4, buffer);
 
     display_.drawRectangle(HitZoneX, NoteY - 2, HitZoneWidth, NoteHeight + 4,
                            TargetColor);
 
     for (const Note& note : notes_) {
-        if (!note.active || note.x < 0.0f || note.x > 128.0f) {
+        if (!note.active || note.x + NoteWidth <= 0.0f ||
+            note.x >= DisplayManager::Width) {
             continue;
         }
 
-        display_.drawRectangle(static_cast<std::uint8_t>(note.x), NoteY,
+        display_.drawRectangle(static_cast<std::int16_t>(std::floor(note.x)), NoteY,
                                static_cast<std::uint8_t>(NoteWidth),
                                NoteHeight, colorValue(note.color));
     }
@@ -108,10 +118,24 @@ void Practice::render() {
     const unsigned remaining =
         elapsed_ >= GameDuration
             ? 0
-            : static_cast<unsigned>(GameDuration - elapsed_);
+            : static_cast<unsigned>(std::ceil(GameDuration - elapsed_));
     std::snprintf(buffer, sizeof(buffer), "TIME %u", remaining);
     display_.drawText(4, 145, buffer);
-    display_.present();
+    if (fullPresentNeeded_) {
+        display_.present();
+        fullPresentNeeded_ = false;
+    } else {
+        // Covers old/new note positions and restores the hit-zone background.
+        display_.present(0, NoteY - 2, DisplayManager::Width, NoteHeight + 4);
+        if (accuracy != displayedAccuracy_) {
+            display_.present(76, 4, DisplayManager::Width - 76, 7);
+        }
+        if (remaining != displayedRemaining_) {
+            display_.present(4, 145, DisplayManager::Width - 4, 7);
+        }
+    }
+    displayedAccuracy_ = accuracy;
+    displayedRemaining_ = remaining;
 }
 
 bool Practice::isFinished() const {
@@ -123,12 +147,12 @@ unsigned Practice::accuracyPercent() const {
     return attempts == 0 ? 0 : (hits_ * 100u) / attempts;
 }
 
-void Practice::spawnNote() {
+void Practice::spawnNote(float age) {
     for (Note& note : notes_) {
         if (!note.active) {
             note.color = static_cast<Color>(
                 get_rand_32() % 4u);
-            note.x = 128.0f;
+            note.x = DisplayManager::Width - NoteSpeed * age;
             note.active = true;
             return;
         }

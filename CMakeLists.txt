@@ -41,7 +41,6 @@ add_executable(arcade-game
     src/engine/input/ir_remote.cpp
     src/engine/output/buzzer.cpp
     src/engine/output/display_manager.cpp
-    src/engine/output/screen.cpp
     src/game/main_menu.cpp
     src/game/swimmy_fish.cpp
     src/game/practice.cpp

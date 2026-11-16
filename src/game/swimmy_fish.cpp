@@ -9,14 +9,14 @@ void SwimmyFish::render(DisplayManager& display, Color color, unsigned score, un
         case Color::Green: name = "GREEN"; rgb = 0x07e0; break;
         case Color::Blue: name = "BLUE"; rgb = 0x001f; break;
         case Color::Yellow: name = "YELLOW"; rgb = 0xffe0; break;
-        case Color::White: name = "WHITE"; rgb = 0xffff; break;
         default: GameDisplay::message(display, "Input", "Invalid color"); return;
     }
     GameDisplay::heading(display, "PRESS THE COLOR");
     display.drawRectangle(24, 36, 80, 48, rgb);
-    display.drawText(4, 96, name, Screen::White, 2);
+    display.drawText(4, 96, name, DisplayManager::White, 2);
     GameDisplay::number(display, 124, "Score: ", score);
     GameDisplay::number(display, 144, "Seconds: ", secondsLeft);
+    display.present();
 }
 
 void SwimmyFish::showResults(DisplayManager& display, unsigned points, unsigned incorrect,
@@ -30,4 +30,5 @@ void SwimmyFish::showResults(DisplayManager& display, unsigned points, unsigned 
         static_cast<unsigned>(100ull * correct / attempts);
     GameDisplay::number(display, 100, "Accuracy %: ", percent);
     display.drawText(4, 136, "IR: replay / menu");
+    display.present();
 }
