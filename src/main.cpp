@@ -5,7 +5,7 @@
 #include "engine/input/button.h"
 #include "engine/input/ir_remote.h"
 #include "engine/output/buzzer.h"
-#include "engine/output/screen.h"
+#include "engine/output/display_manager.h"
 #include "pico/stdlib.h"
 
 constexpr unsigned int BUZZER_PIN = 8;
@@ -18,7 +18,7 @@ int main() {
 
     Buzzer buzzer(BUZZER_PIN);
     IRRemote remote(REMOTE_GPIO);
-    Screen screen;
+    DisplayManager display;
 
     std::array<Button, static_cast<size_t>(Color::Count)> buttons = {
         Button{RED_BTN_GPIO},
@@ -38,7 +38,7 @@ int main() {
 
     buzzer.init();
     remote.init();
-    screen.init();
+    display.init();
 
     printf("Buzzer and NEC IR test started.\n");
     printf("Buzzer: GPIO %u, IR receiver: GPIO %u\n", BUZZER_PIN, REMOTE_GPIO);

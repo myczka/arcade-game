@@ -44,6 +44,10 @@
 // ----------------------------------------------------------------
 // declerations
 void tft_spi_init();
+// Send native RGB565 pixels using DMA; returns after SPI finishes.
+// The caller holds CS low and DC high. SPI returns to 8-bit command mode.
+void tft_write_pixels(const uint16_t *pixels, uint16_t width,
+                      uint16_t height, uint16_t stride);
 
 // ----------------------------------------------------------------
 // necessary includes

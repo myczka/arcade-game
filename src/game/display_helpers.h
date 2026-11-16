@@ -5,7 +5,7 @@
 #include <cstdint>
 
 // Shared game presentation helpers. These do not belong to the hardware layer.
-// Every page clears the display; call views when their displayed data changes.
+// Compose in RAM, then present once when a complete view is ready.
 namespace GameDisplay {
 inline void heading(DisplayManager& display, const char* title) {
     display.clear();
@@ -23,6 +23,7 @@ inline void number(DisplayManager& display, std::uint8_t y,
 inline void message(DisplayManager& display, const char* title, const char* text) {
     heading(display, title);
     display.drawText(4, 48, text);
+    display.present();
 }
 
 inline void result(DisplayManager& display, const char* title,
@@ -30,8 +31,9 @@ inline void result(DisplayManager& display, const char* title,
     heading(display, title);
     char buffer[11];
     std::snprintf(buffer, sizeof(buffer), "%u", value);
-    display.drawText(4, 48, buffer, Screen::White, 2);
+    display.drawText(4, 48, buffer, DisplayManager::White, 2);
     display.drawText(4, 72, unit);
     display.drawText(4, 120, "IR: replay / menu");
+    display.present();
 }
 }

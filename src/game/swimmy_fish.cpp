@@ -14,9 +14,10 @@ void SwimmyFish::render(DisplayManager& display, Color color, unsigned score, un
     }
     GameDisplay::heading(display, "PRESS THE COLOR");
     display.drawRectangle(24, 36, 80, 48, rgb);
-    display.drawText(4, 96, name, Screen::White, 2);
+    display.drawText(4, 96, name, DisplayManager::White, 2);
     GameDisplay::number(display, 124, "Score: ", score);
     GameDisplay::number(display, 144, "Seconds: ", secondsLeft);
+    display.present();
 }
 
 void SwimmyFish::showResults(DisplayManager& display, unsigned points, unsigned incorrect,
@@ -30,4 +31,5 @@ void SwimmyFish::showResults(DisplayManager& display, unsigned points, unsigned 
         static_cast<unsigned>(100ull * correct / attempts);
     GameDisplay::number(display, 100, "Accuracy %: ", percent);
     display.drawText(4, 136, "IR: replay / menu");
+    display.present();
 }

@@ -1,4 +1,4 @@
-#include "reaction.h"
+#include "practice.h"
 #include "display_helpers.h"
 
 void Reaction::showWaiting(DisplayManager& display) {
@@ -8,7 +8,8 @@ void Reaction::showWaiting(DisplayManager& display) {
 void Reaction::showGo(DisplayManager& display) {
     GameDisplay::heading(display, "REACTION");
     display.drawRectangle(24, 36, 80, 48, 0x07e0);
-    display.drawText(4, 96, "GO!", Screen::White, 2);
+    display.drawText(4, 96, "GO!", DisplayManager::White, 2);
+    display.present();
 }
 
 void Reaction::showFalseStart(DisplayManager& display) {
