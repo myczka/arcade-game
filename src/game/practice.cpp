@@ -127,7 +127,7 @@ void Practice::spawnNote() {
         if (!note.active) {
             randomState_ = randomState_ * 1664525u + 1013904223u;
             note.color = static_cast<Color>(
-                randomState_ % static_cast<std::uint32_t>(Color::Count));
+                randomState_ % 4u);
             note.x = 128.0f;
             note.active = true;
             return;
