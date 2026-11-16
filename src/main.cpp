@@ -14,6 +14,8 @@ constexpr int RemoteDown = 0x52;
 constexpr int RemoteEnter = 0x1c;
 constexpr int RemoteLeft = 0x08;
 constexpr int RemoteRight = 0x5a;
+constexpr int RemoteStar = 0x16;
+constexpr int RemoteHash = 0x42;
 
 bool isRemoteUp(int command) {
     return command == 0x18 || command == 0x46;
@@ -25,6 +27,10 @@ bool isRemoteDown(int command) {
 
 bool isRemoteEnter(int command) {
     return command == RemoteEnter || command == 0x1c;
+}
+
+bool isRemoteExit(int command) {
+    return command == RemoteStar || command == RemoteHash;
 }
 
 enum class AppState {
@@ -86,7 +92,12 @@ int main() {
                         (static_cast<int>(selected) + 1) % 3);
                     screenNeedsUpdate = true;
                 } else if (isRemoteEnter(command)) {
-                    state = AppState::Instructions;
+                    if (selected == MenuOption::Accuracy) {
+                        practice.start();
+                        state = AppState::Practice;
+                    } else {
+                        state = AppState::Instructions;
+                    }
                     screenNeedsUpdate = true;
                 } else if (command == RemoteLeft || command == RemoteRight) {
                     // Horizontal navigation is intentionally disabled.
@@ -115,10 +126,15 @@ int main() {
                 break;
 
             case AppState::Practice:
-                practice.update(deltaTime);
-                practice.render();
-                if (practice.isFinished()) {
-                    practice.start();
+                if (isRemoteExit(command)) {
+                    state = AppState::Menu;
+                    screenNeedsUpdate = true;
+                } else {
+                    practice.update(deltaTime);
+                    practice.render();
+                    if (practice.isFinished()) {
+                        practice.start();
+                    }
                 }
                 break;
         }
