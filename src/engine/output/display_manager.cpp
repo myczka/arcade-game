@@ -51,7 +51,7 @@ void DisplayManager::showTitle() {
     drawRectWH(2, 2, 124, 156, ST7735_CYAN); // Outer screen border.
 
     drawRectWH(12, 48, 104, 32, ST7735_CYAN); // Box around the title.
-    drawText(37, 60, "THE CAGES", ST7735_CYAN, 1, Black);
+    drawText(37, 60, "SWIMMY FISH", ST7735_CYAN, 1, Black);
 
     drawText(31, 100, "Press ENTER", ST7735_WHITE, 1, Black);
     drawText(31, 115, "to continue", ST7735_WHITE, 1, Black);
@@ -71,14 +71,14 @@ void DisplayManager::showMenu(int selected) {
         drawRectWH(12, 45, 104, 24, ST7735_YELLOW);
     }
 
-    drawText(40, 53, "Accuracy", selected == 0 ? ST7735_YELLOW : ST7735_WHITE, 1, Black);
+    drawText(40, 53, "PRACTICE", selected == 0 ? ST7735_YELLOW : ST7735_WHITE, 1, Black);
 
     // Highlight Reaction when selected equals 1.
     if (selected == 1) {
         drawRectWH(12, 75, 104, 24, ST7735_YELLOW);
     }
 
-    drawText(40, 83, "Reaction", selected == 1 ? ST7735_YELLOW : ST7735_WHITE, 1, Black);
+    drawText(40, 83, "SWIMMY FISH", selected == 1 ? ST7735_YELLOW : ST7735_WHITE, 1, Black);
 
     // Highlight Memory when selected equals 2.
     if (selected == 2) {
