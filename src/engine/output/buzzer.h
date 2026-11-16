@@ -11,8 +11,9 @@ public:
     void init();
 
     // Functions to control the buzzer
-    // Duration is measured in milliseconds.
-    void play(std::uint32_t frequency, std::uint32_t duration);
+    // Duration is milliseconds; volume is 0 (silent) to 255 (50% duty).
+    void play(std::uint32_t frequency, std::uint32_t duration,
+              std::uint8_t volume = 255);
     void stop();
     void update();
 

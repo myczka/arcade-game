@@ -20,8 +20,9 @@ void Buzzer::init() {
     pwm_set_enabled(slice, false);
 }
 
-void Buzzer::play(std::uint32_t frequency, std::uint32_t duration) {
-    if (frequency == 0 || duration == 0) {
+void Buzzer::play(std::uint32_t frequency, std::uint32_t duration,
+                  std::uint8_t volume) {
+    if (frequency == 0 || duration == 0 || volume == 0) {
         stop();
         return;
     }
@@ -44,7 +45,8 @@ void Buzzer::play(std::uint32_t frequency, std::uint32_t duration) {
     pwm_config_set_clkdiv(&config, divider);
     pwm_config_set_wrap(&config, top);
     pwm_init(slice, &config, false);
-    pwm_set_chan_level(slice, channel, top / 2);
+    // Lower duty reduces the tone's fundamental; GPIO voltage stays fixed.
+    pwm_set_chan_level(slice, channel, (top / 2) * volume / 255u);
     pwm_set_enabled(slice, true);
 
     is_playing = true;
