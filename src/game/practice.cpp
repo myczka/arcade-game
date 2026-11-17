@@ -7,18 +7,18 @@
 #include "pico/rand.h"
 
 namespace {
-constexpr std::uint16_t Red = 0xf800;
-constexpr std::uint16_t Green = 0x03e0;
-constexpr std::uint16_t Blue = 0x001f;
-constexpr std::uint16_t Yellow = 0xfc00;
-constexpr std::uint16_t TargetColor = 0xffff;
+constexpr uint16_t Red = 0xf800;
+constexpr uint16_t Green = 0x03e0;
+constexpr uint16_t Blue = 0x001f;
+constexpr uint16_t Yellow = 0xfc00;
+constexpr uint16_t TargetColor = 0xffff;
 
-constexpr std::uint8_t NoteY = 124;
-constexpr std::uint8_t NoteHeight = 12;
-constexpr std::uint8_t HitZoneX = 8;
-constexpr std::uint8_t HitZoneWidth = 16;
+constexpr uint8_t NoteY = 124;
+constexpr uint8_t NoteHeight = 12;
+constexpr uint8_t HitZoneX = 8;
+constexpr uint8_t HitZoneWidth = 16;
 
-std::uint16_t colorValue(Color color) {
+uint16_t colorValue(Color color) {
     switch (color) {
         case Color::Red: return Red;
         case Color::Green: return Green;
@@ -29,7 +29,7 @@ std::uint16_t colorValue(Color color) {
     return 0;
 }
 
-std::uint32_t toneFrequency(Color color) {
+uint32_t toneFrequency(Color color) {
     switch (color) {
         case Color::Red: return 262;
         case Color::Green: return 330;
@@ -41,8 +41,8 @@ std::uint32_t toneFrequency(Color color) {
 }
 }  // namespace
 
-Practice::Practice(InputManager& input, DisplayManager& display, Buzzer& buzzer)
-    : input_(input), display_(display), buzzer_(buzzer) {}
+Practice::Practice(InputManager& input, DisplayManager& display, Buzzer& buzzer, Score& score)
+    : input_(input), display_(display), buzzer_(buzzer), score_(score) {}
 
 void Practice::start() {
     notes_ = {};
@@ -52,6 +52,7 @@ void Practice::start() {
     misses_ = 0;
     running_ = true;
     fullPresentNeeded_ = true;
+    score_.init(true);
 }
 
 void Practice::update(float dt) {
@@ -92,15 +93,25 @@ void Practice::update(float dt) {
     }
 }
 
+/* Optimized rendering, disabled while comparing the earlier version.
 void Practice::render() {
-    display_.clear();
-    display_.drawText(4, 4, "PRACTICE");
+    if (fullPresentNeeded_) {
+        display_.clear();
+        display_.drawText(4, 4, "PRACTICE");
+    }
 
     const unsigned accuracy = accuracyPercent();
     char buffer[24];
-    std::snprintf(buffer, sizeof(buffer), "ACC %u%%", accuracy);
-    display_.drawText(76, 4, buffer);
+    if (fullPresentNeeded_ || accuracy != displayedAccuracy_) {
+        display_.drawRectangle(76, 4, DisplayManager::Width - 76, 7,
+                               DisplayManager::Black);
+        std::snprintf(buffer, sizeof(buffer), "ACC %u%%", accuracy);
+        display_.drawText(76, 4, buffer);
+    }
 
+    // Restore only the moving lane; unchanged text stays in the framebuffer.
+    display_.drawRectangle(0, NoteY - 2, DisplayManager::Width, NoteHeight + 4,
+                           DisplayManager::Black);
     display_.drawRectangle(HitZoneX, NoteY - 2, HitZoneWidth, NoteHeight + 4,
                            TargetColor);
 
@@ -110,17 +121,21 @@ void Practice::render() {
             continue;
         }
 
-        display_.drawRectangle(static_cast<std::int16_t>(std::floor(note.x)), NoteY,
-                               static_cast<std::uint8_t>(NoteWidth),
+        display_.drawRectangle(static_cast<int16_t>(std::floor(note.x)), NoteY,
+                               static_cast<uint8_t>(NoteWidth),
                                NoteHeight, colorValue(note.color));
     }
 
-    const unsigned remaining =
-        elapsed_ >= GameDuration
-            ? 0
-            : static_cast<unsigned>(std::ceil(GameDuration - elapsed_));
-    std::snprintf(buffer, sizeof(buffer), "TIME %u", remaining);
-    display_.drawText(4, 145, buffer);
+    unsigned remaining = 0;
+    if (elapsed_ < GameDuration) {
+        remaining = static_cast<unsigned>(std::ceil(GameDuration - elapsed_));
+    }
+    if (fullPresentNeeded_ || remaining != displayedRemaining_) {
+        display_.drawRectangle(4, 145, DisplayManager::Width - 4, 7,
+                               DisplayManager::Black);
+        std::snprintf(buffer, sizeof(buffer), "TIME %u", remaining);
+        display_.drawText(4, 145, buffer);
+    }
     if (fullPresentNeeded_) {
         display_.present();
         fullPresentNeeded_ = false;
@@ -129,6 +144,52 @@ void Practice::render() {
         display_.present(0, NoteY - 2, DisplayManager::Width, NoteHeight + 4);
         if (accuracy != displayedAccuracy_) {
             display_.present(76, 4, DisplayManager::Width - 76, 7);
+        }
+        if (remaining != displayedRemaining_) {
+            display_.present(4, 145, DisplayManager::Width - 4, 7);
+        }
+    }
+    displayedAccuracy_ = accuracy;
+    displayedRemaining_ = remaining;
+}
+
+*/
+
+void Practice::render() {
+    display_.clear();
+    display_.drawText(4, 4, "PRACTICE");
+
+    const unsigned accuracy = accuracyPercent();
+    char buffer[24];
+    score_.update(accuracy);
+    score_.render();
+
+    display_.drawRectangle(HitZoneX, NoteY - 2, HitZoneWidth, NoteHeight + 4, TargetColor);
+
+    for (const Note& note : notes_) {
+        if (!note.active || note.x + NoteWidth <= 0.0f ||
+            note.x >= DisplayManager::Width) {
+            continue;
+        }
+
+        display_.drawRectangle(static_cast<int16_t>(std::floor(note.x)), NoteY, static_cast<uint8_t>(NoteWidth), NoteHeight, colorValue(note.color));
+    }
+
+    unsigned remaining = 0;
+    if (elapsed_ < GameDuration) {
+        remaining = static_cast<unsigned>(std::ceil(GameDuration - elapsed_));
+    }
+    std::snprintf(buffer, sizeof(buffer), "TIME %u", remaining);
+    display_.drawText(4, 145, buffer);
+
+    if (fullPresentNeeded_) {
+        display_.present();
+        fullPresentNeeded_ = false;
+    } else {
+        // Covers old/new note positions and restores the hit-zone background.
+        display_.present(0, NoteY - 2, DisplayManager::Width, NoteHeight + 4);
+        if (accuracy != displayedAccuracy_) {
+            display_.present(Score::X, Score::Y, Score::Width, Score::Height);
         }
         if (remaining != displayedRemaining_) {
             display_.present(4, 145, DisplayManager::Width - 4, 7);
@@ -150,8 +211,7 @@ unsigned Practice::accuracyPercent() const {
 void Practice::spawnNote(float age) {
     for (Note& note : notes_) {
         if (!note.active) {
-            note.color = static_cast<Color>(
-                get_rand_32() % 4u);
+            note.color = static_cast<Color>(get_rand_32() % 4u);
             note.x = DisplayManager::Width - NoteSpeed * age;
             note.active = true;
             return;

@@ -20,49 +20,92 @@ void Buzzer::init() {
     pwm_set_enabled(slice, false);
 }
 
-void Buzzer::play(std::uint32_t frequency, std::uint32_t duration,
-                  std::uint8_t volume) {
+void Buzzer::play(uint32_t frequency, uint32_t duration, uint8_t volume, uint8_t release_volume) {
     if (frequency == 0 || duration == 0 || volume == 0) {
         stop();
         return;
     }
 
-    const std::uint32_t clock_hz = clock_get_hz(clk_sys);
-    const std::uint64_t denominator =
-        static_cast<std::uint64_t>(frequency) * 65536u;
-    const float divider = std::clamp(
-        static_cast<float>((clock_hz + denominator - 1) / denominator),
-        1.0f,
-        255.9375f);
-    const std::uint32_t top = std::min<std::uint32_t>(
-        static_cast<std::uint32_t>(
-            static_cast<double>(clock_hz) /
-                (static_cast<double>(divider) * frequency) -
-            1.0),
-        65535u);
-
-    pwm_config config = pwm_get_default_config();
-    pwm_config_set_clkdiv(&config, divider);
-    pwm_config_set_wrap(&config, top);
-    pwm_init(slice, &config, false);
-    // Lower duty reduces the tone's fundamental; GPIO voltage stays fixed.
-    pwm_set_chan_level(slice, channel, (top / 2) * volume / 255u);
+    sweeping = false;
+    sweep_start_frequency = std::clamp<uint32_t>(frequency, 20, 20000);
+    start_volume_ = volume;
+    release_volume_ = release_volume;
+    setTone(frequency, volume, true);
     pwm_set_enabled(slice, true);
 
     is_playing = true;
-    stop_time = time_us_64() +
-                static_cast<std::uint64_t>(duration) * 1000u;
+    start_time = time_us_64();
+    stop_time = start_time + static_cast<uint64_t>(duration) * 1000u;
+}
+
+void Buzzer::setTone(uint32_t frequency, uint8_t volume, bool restart) {
+    // Keep divider and wrap calculations within the PWM's supported range.
+    frequency = std::clamp<uint32_t>(frequency, 20, 20000);
+    const uint32_t clock_hz = clock_get_hz(clk_sys);
+    const uint64_t denominator =
+        static_cast<uint64_t>(frequency) * 65536u;
+    const float divider = std::clamp(static_cast<float>((clock_hz + denominator - 1) / denominator), 1.0f, 255.9375f);
+    const uint32_t top = std::min<uint32_t>(static_cast<uint32_t>(static_cast<double>(clock_hz) / (static_cast<double>(divider) * frequency) - 1.0), 65535u);
+
+    if (restart) {
+        // Start each new sound using the original, working PWM setup.
+        pwm_config config = pwm_get_default_config();
+        pwm_config_set_clkdiv(&config, divider);
+        pwm_config_set_wrap(&config, top);
+        pwm_init(slice, &config, false);
+    } else {
+        // Change a running sweep without resetting its counter.
+        pwm_set_clkdiv(slice, divider);
+        pwm_set_wrap(slice, top);
+    }
+    // Lower duty reduces the tone's fundamental; GPIO voltage stays fixed.
+    pwm_set_chan_level(slice, channel, (top / 2) * volume / 255u);
+}
+
+void Buzzer::sweep(uint32_t start_frequency, uint32_t end_frequency, uint32_t duration, uint8_t release_volume) {
+    if (start_frequency == 0 || end_frequency == 0 || duration == 0) {
+        stop();
+        return;
+    }
+    sweep_start_frequency = std::clamp<uint32_t>(start_frequency, 20, 20000);
+    sweep_end_frequency = std::clamp<uint32_t>(end_frequency, 20, 20000);
+    play(sweep_start_frequency, duration, 255, release_volume);
+    sweeping = true;
 }
 
 void Buzzer::stop() {
     pwm_set_chan_level(slice, channel, 0);
     pwm_set_enabled(slice, false);
     is_playing = false;
+    sweeping = false;
     stop_time = 0;
 }
 
 void Buzzer::update() {
-    if (is_playing && time_us_64() >= stop_time) {
+    if (!is_playing) {
+        return;
+    }
+    const uint64_t now = time_us_64();
+    if (now >= stop_time) {
         stop();
+        return;
+    }
+    if (sweeping || release_volume_ < 255) {
+        const uint64_t duration = stop_time - start_time;
+        const uint64_t elapsed = now - start_time;
+        uint32_t frequency = sweep_start_frequency;
+        if (sweeping) {
+            const float progress = static_cast<float>(elapsed) / duration;
+            frequency = static_cast<uint32_t>(sweep_start_frequency + (static_cast<float>(sweep_end_frequency) - sweep_start_frequency) * progress);
+        }
+
+        uint8_t volume = start_volume_;
+        // Use a 20 ms ping (shorter for very short sounds), then snap down.
+        const auto ping_duration = std::min<uint64_t>(20000, duration / 4);
+        if (release_volume_ < 255 && elapsed >= ping_duration) {
+            const auto release = std::min(release_volume_, start_volume_);
+            volume = static_cast<uint8_t>(release * (stop_time - now) / (duration - ping_duration));
+        }
+        setTone(frequency, volume);
     }
 }

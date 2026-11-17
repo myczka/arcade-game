@@ -6,10 +6,11 @@
 #include "engine/input/input_manager.h"
 #include "engine/output/buzzer.h"
 #include "engine/output/display_manager.h"
+#include "score.h"
 
 class Practice {
 public:
-    Practice(InputManager& input, DisplayManager& display, Buzzer& buzzer);
+    Practice(InputManager& input, DisplayManager& display, Buzzer& buzzer, Score& score);
 
     void start();
     void update(float dt);
@@ -44,6 +45,7 @@ private:
     InputManager& input_;
     DisplayManager& display_;
     Buzzer& buzzer_;
+    Score& score_;
     std::array<Note, MaxNotes> notes_{};
     float elapsed_ = 0.0f;
     float spawnTimer_ = 0.0f;

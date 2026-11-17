@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <array>
+#include <cstdio>
 
 #include "pico/rand.h"
 
@@ -19,7 +20,8 @@ const std::array<FishFrames, static_cast<size_t>(Color::Count)> fish_sprs = {
     blue_fish,
     yellow_fish};
 
-SwimmyFish::SwimmyFish(InputManager& input, DisplayManager& display, Buzzer& buzzer) : input_(input), display_(display), buzzer_(buzzer) {
+SwimmyFish::SwimmyFish(InputManager& input, DisplayManager& display, Buzzer& buzzer, Score& score)
+    : input_(input), display_(display), buzzer_(buzzer), score_(score) {
 
 }
 
@@ -31,19 +33,22 @@ void SwimmyFish::fishLocation() {
 
 bool SwimmyFish::hasCollision() const {
     if (fish_left < 0.0f || fish_right > DisplayManager::Width ||
-        fish_top < 0.0f || fish_bottom > DisplayManager::Height) {
+        fish_top < 0.0f) {
+        std::printf("Swimmy collision: screen; fish x=[%d,%d] y=[%d,%d], screen=%ux%u\n", static_cast<int>(fish_left), static_cast<int>(fish_right), static_cast<int>(fish_top), static_cast<int>(fish_bottom), static_cast<unsigned>(DisplayManager::Width), static_cast<unsigned>(DisplayManager::Height));
         return true;
     }
 
     for (const Pipe& pipe : pipes) {
-        const bool overlaps_x = fish_right > pipe.x &&
-                                fish_left < pipe.x + PIPE_WIDTH;
+        const float pipe_left = std::floor(pipe.x);
+        const bool overlaps_x = fish_right > pipe_left &&
+                                fish_left < pipe_left + PIPE_WIDTH;
         if (!overlaps_x) {
             continue;
         }
-        const float gap_top = pipe.gap_y - GAP_HEIGHT / 2.0f;
-        const float gap_bottom = pipe.gap_y + GAP_HEIGHT / 2.0f;
+        const float gap_top = std::floor(pipe.gap_y - GAP_HEIGHT / 2.0f);
+        const float gap_bottom = gap_top + GAP_HEIGHT;
         if (fish_top < gap_top || fish_bottom > gap_bottom) {
+            std::printf("Swimmy collision: pipe; fish x=[%d,%d] y=[%d,%d], pipe x=[%d,%d], gap y=[%d,%d]\n", static_cast<int>(fish_left), static_cast<int>(fish_right), static_cast<int>(fish_top), static_cast<int>(fish_bottom), static_cast<int>(pipe_left), static_cast<int>(pipe_left + PIPE_WIDTH), static_cast<int>(gap_top), static_cast<int>(gap_bottom));
             return true;
         }
     }
@@ -56,16 +61,15 @@ void SwimmyFish::start() {
 
     fish_velocity = 0;
     transition_frames_ = 0;
+    ready_frames_ = 30;
     running_ = true;
-    sound_frames_ = 0;
-    sound_volume_ = 255;
-    sound_c3_ = true;
+    score_.init(false);
     color_state_ = static_cast<Color>(get_rand_32() % 4u);
 
     display_.drawSprite(fish_x, fish_y, fish_sprs.at(static_cast<int>(color_state_))[1], 32, 32);
 
     for (unsigned i = 0; i < 2; ++i) {
-        resetPipe(pipes[i], -static_cast<float>(PIPE_WIDTH) - i * PIPE_SPACING);
+        resetPipe(pipes[i], -static_cast<float>(PIPE_SPACING) - i * PIPE_SPACING);
     }
     full_present_needed = true;
     fishLocation();
@@ -77,16 +81,30 @@ void SwimmyFish::update(float dt) {
     if (!running_ || dt <= 0.0f) {
         return;
     }
+    // Show the starting pose for 30 frames before accepting flaps or moving.
+    if (ready_frames_ > 0) {
+        --ready_frames_;
+        return;
+    }
     //meth
     fish_velocity = fish_velocity + GRAVITY * dt;
     fish_y = fish_y + fish_velocity * dt;
 
+    // Evaluate transition frames for up and down
     if (transition_frames_ > 0) {
         --transition_frames_;
+    } else if (transition_frames_ < 0) {
+        ++transition_frames_;
     }
+
+    // Check button but also sets transition frames for up/down
     if (input_.wasPressed(color_state_)) {
-        fish_velocity = fish_velocity - 500;
-        transition_frames_ = 3;
+        fish_velocity = -90;
+        transition_frames_ = 2;
+        buzzer_.sweep(160, 800, 300, 32);
+    }
+    else if (fish_velocity == 0) {
+        transition_frames_ = -3;
     }
     
     // For the love of the game
@@ -100,37 +118,16 @@ void SwimmyFish::update(float dt) {
         fish_velocity = 0.0f;
         buzzer_.stop();
     }
-    else if (fish_cntr_x < pipes[0].x) {
-        pipes[0] = pipes[1];
-        pipes[1] = {-PIPE_SPEED, (7 + get_rand_32() % (GAP_HEIGHT - 7 + 1))};
-        color_state_ = static_cast<Color>(get_rand_32() % 4u);
-    }
+
+    // Checks if running?
     if (running_) {
-        updateSwimSound();
-    }
-}
-
-void SwimmyFish::updateSwimSound() {
-    constexpr uint8_t FramesPerNote = 15;
-    constexpr uint32_t NoteDurationMs = 100;
-    constexpr uint8_t FadeStep = 16;
-
-    if (sound_volume_ == 0 || ++sound_frames_ < FramesPerNote) {
-        return;
-    }
-    sound_frames_ = 0;
-
-    // Rounded C3 (130.81 Hz) and G3 (196.00 Hz).
-    uint32_t frequency = 196;
-    if (sound_c3_) {
-        frequency = 131;
-    }
-    buzzer_.play(frequency, NoteDurationMs, sound_volume_);
-    sound_c3_ = !sound_c3_;
-    if (sound_volume_ > FadeStep) {
-        sound_volume_ -= FadeStep;
-    } else {
-        sound_volume_ = 0;
+        for (Pipe& pipe : pipes) {
+            if (!pipe.scored && std::floor(pipe.x) >= fish_right) {
+                pipe.scored = true;
+                score_.update(score_.value() + 1);
+                color_state_ = static_cast<Color>(get_rand_32() % 4u);
+            }
+        }
     }
 }
 
@@ -145,7 +142,7 @@ void SwimmyFish::render() {
 
     // Briefly use the neutral pose after each flap, then follow velocity.
     unsigned frame = 1;
-    if (transition_frames_ > 0) {
+    if (transition_frames_ > 0 || transition_frames_ < 0) {
         frame = 1;
     } else if (fish_velocity < 0) {
         frame = 0;
@@ -153,8 +150,9 @@ void SwimmyFish::render() {
         frame = 2;
     }
     const auto draw_y = static_cast<int16_t>(std::floor(fish_y));
-    display_.drawSprite(fish_x, draw_y,
-        fish_sprs.at(static_cast<int>(color_state_))[frame], 32, 32);
+    display_.drawSprite(fish_x, draw_y, fish_sprs.at(static_cast<int>(color_state_))[frame], 32, 32);
+
+    score_.render();
 
     if (full_present_needed) {
         display_.present();
@@ -172,6 +170,7 @@ void SwimmyFish::render() {
         // Both regions use the finished scene, erasing the old fish position.
         display_.present(fish_x, displayed_fish_y_, 32, 32);
         display_.present(fish_x, draw_y, 32, 32);
+        display_.present(Score::X, Score::Y, Score::Width, Score::Height);
     }
     displayed_fish_y_ = draw_y;
     for (unsigned i = 0; i < 2; ++i) {
@@ -184,8 +183,7 @@ void SwimmyFish::resetPipe(Pipe& pipe, float x) {
     constexpr unsigned MinimumGapY = PIPE_MARGIN + GAP_HEIGHT / 2;
     constexpr unsigned MaximumGapY = DisplayManager::Height - MinimumGapY;
     pipe.x = x;
-    pipe.gap_y = static_cast<float>(MinimumGapY +
-        get_rand_32() % (MaximumGapY - MinimumGapY + 1));
+    pipe.gap_y = static_cast<float>(MinimumGapY + get_rand_32() % (MaximumGapY - MinimumGapY + 1));
     pipe.scored = false;
 }
 
@@ -196,8 +194,7 @@ void SwimmyFish::updatePipes(float dt) {
     for (Pipe& pipe : pipes) {
         if (pipe.x >= DisplayManager::Width) {
             const float leftmost = std::min(pipes[0].x, pipes[1].x);
-            resetPipe(pipe, std::min(-static_cast<float>(PIPE_WIDTH),
-                                     leftmost - PIPE_SPACING));
+            resetPipe(pipe, std::min(-static_cast<float>(PIPE_WIDTH), leftmost - PIPE_SPACING));
         }
     }
 }
@@ -208,29 +205,22 @@ void SwimmyFish::drawPipes() {
             continue;
         }
         const auto x = static_cast<int16_t>(std::floor(pipe.x));
-        const auto gap_top = static_cast<uint8_t>(pipe.gap_y - GAP_HEIGHT / 2);
-        const auto gap_bottom = static_cast<uint8_t>(pipe.gap_y + GAP_HEIGHT / 2);
+        const auto gap_top = static_cast<uint8_t>(std::floor(pipe.gap_y - GAP_HEIGHT / 2.0f));
+        const auto gap_bottom = static_cast<uint8_t>(gap_top + GAP_HEIGHT);
         display_.drawRectangle(x, 0, PIPE_WIDTH, gap_top, PIPE_COLOR);
-        display_.drawRectangle(x, gap_bottom, PIPE_WIDTH,
-                               DisplayManager::Height - gap_bottom, PIPE_COLOR);
+        display_.drawRectangle(x, gap_bottom, PIPE_WIDTH, DisplayManager::Height - gap_bottom, PIPE_COLOR);
     }
 }
 
 void SwimmyFish::presentPipeRegion(const Pipe& previous, const Pipe& current) {
     const float left = std::max(0.0f, std::floor(std::min(previous.x, current.x)));
-    const float right = std::min(static_cast<float>(DisplayManager::Width),
-        std::ceil(std::max(previous.x, current.x) + PIPE_WIDTH));
+    const float right = std::min(static_cast<float>(DisplayManager::Width), std::ceil(std::max(previous.x, current.x) + PIPE_WIDTH));
     if (right <= left) {
         return;
     }
     // Cover both the old and new pipe extents, leaving the shared gap untouched.
-    const auto top_height = static_cast<uint8_t>(
-        std::max(previous.gap_y, current.gap_y) - GAP_HEIGHT / 2);
-    const auto bottom_y = static_cast<uint8_t>(
-        std::min(previous.gap_y, current.gap_y) + GAP_HEIGHT / 2);
-    display_.present(static_cast<int16_t>(left), 0,
-                      static_cast<uint8_t>(right - left), top_height);
-    display_.present(static_cast<int16_t>(left), bottom_y,
-                      static_cast<uint8_t>(right - left),
-                      DisplayManager::Height - bottom_y);
+    const auto top_height = static_cast<uint8_t>(std::floor(std::max(previous.gap_y, current.gap_y) - GAP_HEIGHT / 2.0f));
+    const auto bottom_y = static_cast<uint8_t>(std::floor(std::min(previous.gap_y, current.gap_y) - GAP_HEIGHT / 2.0f) + GAP_HEIGHT);
+    display_.present(static_cast<int16_t>(left), 0, static_cast<uint8_t>(right - left), top_height);
+    display_.present(static_cast<int16_t>(left), bottom_y, static_cast<uint8_t>(right - left), DisplayManager::Height - bottom_y);
 }

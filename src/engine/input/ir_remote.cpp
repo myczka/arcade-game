@@ -4,22 +4,21 @@
 
 namespace {
 // NEC timing values, expressed in microseconds.
-constexpr std::uint32_t NEC_FRAME_GAP_US = 10000;
-constexpr std::uint32_t NEC_LEADER_LOW_US = 9000;
-constexpr std::uint32_t NEC_LEADER_HIGH_US = 4500;
-constexpr std::uint32_t NEC_BIT_LOW_US = 560;
-constexpr std::uint32_t NEC_ZERO_HIGH_US = 560;
-constexpr std::uint32_t NEC_ONE_HIGH_US = 1690;
-constexpr std::uint32_t NEC_REPEAT_HIGH_US = 2250;
-constexpr std::uint32_t NEC_TOLERANCE_US = 250;
-constexpr std::uint8_t NEC_FRAME_PULSES = 66;
-constexpr std::uint8_t NEC_REPEAT_PULSES = 3;
-constexpr std::uint32_t IR_COMMAND_COOLDOWN_US = 150000;
+constexpr uint32_t NEC_FRAME_GAP_US = 10000;
+constexpr uint32_t NEC_LEADER_LOW_US = 9000;
+constexpr uint32_t NEC_LEADER_HIGH_US = 4500;
+constexpr uint32_t NEC_BIT_LOW_US = 560;
+constexpr uint32_t NEC_ZERO_HIGH_US = 560;
+constexpr uint32_t NEC_ONE_HIGH_US = 1690;
+constexpr uint32_t NEC_REPEAT_HIGH_US = 2250;
+constexpr uint32_t NEC_TOLERANCE_US = 250;
+constexpr uint8_t NEC_FRAME_PULSES = 66;
+constexpr uint8_t NEC_REPEAT_PULSES = 3;
+constexpr uint32_t IR_COMMAND_COOLDOWN_US = 150000;
 
-bool within(std::uint32_t value, std::uint32_t expected,
-            std::uint32_t tolerance = NEC_TOLERANCE_US) {
+bool within(uint32_t value, uint32_t expected, uint32_t tolerance = NEC_TOLERANCE_US) {
     // Accept timing variation caused by the remote and receiver hardware.
-    const std::uint32_t minimum =
+    const uint32_t minimum =
         expected > tolerance ? expected - tolerance : 0;
     return value >= minimum && value <= expected + tolerance;
 }
@@ -29,7 +28,7 @@ bool within(std::uint32_t value, std::uint32_t expected,
 static IRRemote* activeRemote = nullptr;
 
 // Store the pin and reset the receiver state before initialization.
-IRRemote::IRRemote(std::uint8_t pin)
+IRRemote::IRRemote(uint8_t pin)
     : pin(pin),
       frame_ready(false),
       capturing_frame(false),
@@ -48,11 +47,7 @@ void IRRemote::init() {
     gpio_set_dir(pin, GPIO_IN);
     gpio_disable_pulls(pin);
 
-    gpio_set_irq_enabled_with_callback(
-        pin,
-        GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL,
-        true,
-        &IRRemote::gpioCallback);
+    gpio_set_irq_enabled_with_callback(pin, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &IRRemote::gpioCallback);
 }
 
 // Decode a completed frame when the main program asks for a command.
@@ -70,7 +65,7 @@ bool IRRemote::receivedCommand()
     this->pulse_count = 0;
     if (command >= 0)
     {
-        const std::uint32_t now = time_us_32();
+        const uint32_t now = time_us_32();
         if (has_received_command &&
             command == last_received_command &&
             now - last_command_time_us < IR_COMMAND_COOLDOWN_US) {
@@ -92,20 +87,20 @@ int8_t IRRemote::getLastReceivedCommand() const {
 
     /* PRIVATE FUNCTIONS*/
 // Forward the GPIO interrupt to the active IRRemote object.
-void IRRemote::gpioCallback(unsigned int gpio, std::uint32_t events) {
+void IRRemote::gpioCallback(unsigned int gpio, uint32_t events) {
     if (activeRemote != nullptr && gpio == activeRemote->pin) {
         activeRemote->handleEvent(events);
     }
 }
 
 // Capture the duration between edges without decoding inside the interrupt.
-void IRRemote::handleEvent(std::uint32_t) {
+void IRRemote::handleEvent(uint32_t) {
     if (frame_ready) {
         return;
     }
 
-    const std::uint32_t now = time_us_32();
-    const std::uint32_t duration = now - last_edge_time;
+    const uint32_t now = time_us_32();
+    const uint32_t duration = now - last_edge_time;
 
     last_edge_time = now;
 
@@ -154,10 +149,10 @@ int IRRemote::decodeFrame() {
 
     // NEC transmits 32 bits: address, inverted address, command,
     // and inverted command.
-    std::uint32_t data = 0;
-    for (std::uint8_t bit = 0; bit < 32; bit++) {
-        const std::uint32_t low = pulse_durations[2 + bit * 2];
-        const std::uint32_t high = pulse_durations[3 + bit * 2];
+    uint32_t data = 0;
+    for (uint8_t bit = 0; bit < 32; bit++) {
+        const uint32_t low = pulse_durations[2 + bit * 2];
+        const uint32_t high = pulse_durations[3 + bit * 2];
 
         if (!within(low, NEC_BIT_LOW_US)) {
             return -1;
@@ -173,8 +168,8 @@ int IRRemote::decodeFrame() {
     }
 
     // The command is followed by its bitwise inverse for validation.
-    const std::uint8_t command = (data >> 16) & 0xff;
-    const std::uint8_t inverse_command = (data >> 24) & 0xff;
+    const uint8_t command = (data >> 16) & 0xff;
+    const uint8_t inverse_command = (data >> 24) & 0xff;
 
     if ((command ^ inverse_command) != 0xff) {
         return -1;

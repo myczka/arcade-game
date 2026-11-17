@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <cstdint>
+#include <stdint.h>
 #include <pico/types.h>
 
 constexpr uint32_t REMOTE_GPIO = 7;
@@ -22,7 +22,7 @@ public:
 
 private:
     // Static adapter called by the Pico GPIO interrupt system.
-    static void gpioCallback(unsigned int gpio, std::uint32_t events);
+    static void gpioCallback(unsigned int gpio, uint32_t events);
 
     // Records the time between signal edges while an NEC frame arrives.
     void handleEvent(uint32_t events);
@@ -31,7 +31,7 @@ private:
     int decodeFrame();
 
     // GPIO pin connected to the IR receiver module.
-    std::uint8_t pin;
+    uint8_t pin;
 
     //uint8_t received_command = NULL;
 
@@ -42,19 +42,19 @@ private:
     volatile bool capturing_frame;
 
     // Timestamp of the previous GPIO edge, in microseconds.
-    volatile std::uint32_t last_edge_time;
+    volatile uint32_t last_edge_time;
 
     // Pulse durations captured from the current NEC frame.
-    volatile std::uint32_t pulse_durations[100];
+    volatile uint32_t pulse_durations[100];
 
     // Number of valid entries currently in pulse_durations.
-    volatile std::uint8_t pulse_count;
+    volatile uint8_t pulse_count;
 
     // Last valid command; -1 means no command has been decoded.
     int8_t last_received_command;
 
     // Time when the last command was accepted, used to debounce repeats.
-    std::uint32_t last_command_time_us;
+    uint32_t last_command_time_us;
 
     bool has_received_command;
 };

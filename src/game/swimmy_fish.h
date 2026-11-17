@@ -4,6 +4,7 @@
 #include "engine/output/display_manager.h"
 
 #include "engine/input/input_manager.h"
+#include "score.h"
 
 struct Pipe {
     float x;
@@ -14,9 +15,10 @@ struct Pipe {
 class SwimmyFish {
     public:
         static constexpr float GRAVITY = 300;
-        static constexpr uint16_t BACKGROUND = 0x421F;
+        //static constexpr uint16_t BACKGROUND = 0x421F;
+        static constexpr uint16_t BACKGROUND = 0x409a;
 
-        SwimmyFish(InputManager & input, DisplayManager &display, Buzzer &buzzer);
+        SwimmyFish(InputManager& input, DisplayManager& display, Buzzer& buzzer, Score& score);
 
         void start();
         void update(float dt);
@@ -26,7 +28,6 @@ class SwimmyFish {
 
     private:
         void fishLocation();
-        void updateSwimSound();
         bool hasCollision() const;
         void resetPipe(Pipe& pipe, float x);
         void updatePipes(float dt);
@@ -38,11 +39,12 @@ class SwimmyFish {
         static constexpr uint8_t PIPE_MARGIN = 12;
         static constexpr float PIPE_SPACING = 96.0f;
         static constexpr float PIPE_SPEED = 40.0f;
-        static constexpr uint16_t PIPE_COLOR = 0x07E0;
+        static constexpr uint16_t PIPE_COLOR = 0xF206;
 
         InputManager& input_;
         DisplayManager& display_;
         Buzzer& buzzer_;
+        Score& score_;
 
         //const float fish_start_x = 48;
         const float fish_start_y = 64;
@@ -51,6 +53,7 @@ class SwimmyFish {
         float fish_y;
         float fish_velocity = 0;
         uint8_t transition_frames_ = 0;
+        uint8_t ready_frames_ = 30;
         int16_t displayed_fish_y_ = 64;
 
 
@@ -67,9 +70,6 @@ class SwimmyFish {
         bool full_present_needed = true;
 
         bool running_ = false;
-        uint8_t sound_frames_ = 0;
-        uint8_t sound_volume_ = 255;
-        bool sound_c3_ = true;
         Color color_state_ = Color::Blue;
 
 

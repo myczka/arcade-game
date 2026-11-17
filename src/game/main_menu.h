@@ -7,5 +7,6 @@ enum class MenuOption { Practice, SwimmyFish, Count };
 
 class MainMenu {
 public:
+    void renderTitle(DisplayManager& display);
     void render(DisplayManager& display, MenuOption selected);
 };
