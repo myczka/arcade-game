@@ -6,11 +6,11 @@ namespace {
 constexpr int MenuOptionCount = static_cast<int>(MenuOption::Count);
 
 bool isRemoteUp(int command) {
-    return command == 0x18 || command == 0x46;
+    return command == 0x08;
 }
 
 bool isRemoteDown(int command) {
-    return command == 0x52 || command == 0x15;
+    return command == 0x5a;
 }
 
 bool isRemoteEnter(int command) {

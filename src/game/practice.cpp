@@ -10,7 +10,7 @@ namespace {
 constexpr uint16_t Red = 0xf800;
 constexpr uint16_t Green = 0x03e0;
 constexpr uint16_t Blue = 0x001f;
-constexpr uint16_t Yellow = 0xfc00;
+constexpr uint16_t Yellow = 0xc7e0;
 constexpr uint16_t TargetColor = 0xffff;
 
 constexpr uint8_t NoteHeight = 12;
