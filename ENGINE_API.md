@@ -29,8 +29,7 @@ Practice practice(input, display, buzzer, score);
 Its constructor binds the reference members in its initializer list:
 
 ```cpp
-Practice::Practice(InputManager& input, DisplayManager& display, Buzzer& buzzer,
-                   Score& score)
+Practice::Practice(InputManager& input, DisplayManager& display, Buzzer& buzzer, Score& score)
     : input_(input), display_(display), buzzer_(buzzer), score_(score) {}
 ```
 
@@ -166,23 +165,19 @@ The current project configuration uses SPI1, TX GPIO 11, clock GPIO 10, CS GPIO 
 All functions in this section return `void` and change RAM only. Call `present()` to make their results visible.
 
 ```cpp
-void clear(std::uint16_t color = Black);
+void clear(uint16_t color = Black);
 ```
 
 Fills the entire framebuffer with `color`. This does not erase the physical display until its pixels are presented. It does not reset game state or stored sprite data.
 
 ```cpp
-void drawRectangle(std::int16_t x, std::int16_t y,
-                   std::uint8_t width, std::uint8_t height,
-                   std::uint16_t color);
+void drawRectangle(int16_t x, int16_t y, uint8_t width, uint8_t height, uint16_t color);
 ```
 
 Draws a filled rectangle with top-left position `(x, y)`. Width and height are pixel counts, not bottom-right coordinates. The driver clips all four edges. Empty rectangles and rectangles entirely outside the display do nothing. For example, `(10, 20, 3, 2)` covers columns 10 through 12 and rows 20 through 21.
 
 ```cpp
-void drawSprite(std::int16_t x, std::int16_t y,
-                const std::uint16_t* pixels,
-                std::uint8_t width, std::uint8_t height);
+void drawSprite(int16_t x, int16_t y, const uint16_t* pixels, uint8_t width, uint8_t height);
 ```
 
 Draws a sprite from at least `width * height` RGB565 values, ordered left to right within each row, then top to bottom. `(x, y)` is the top-left of the complete sprite canvas, including transparent padding.
@@ -192,10 +187,7 @@ Pixels matching `DisplayManager::Transparent` (`0xF81F`) are skipped, preserving
 Draw the background and obstacles before the fish. To erase an old fish position, redraw the background in RAM and present the old and new regions. Transparency does not erase previously drawn pixels on its own.
 
 ```cpp
-void drawText(std::uint8_t x, std::uint8_t y, const char* text,
-              std::uint16_t color = White,
-              std::uint8_t scale = 1,
-              std::uint16_t background = Black);
+void drawText(uint8_t x, uint8_t y, const char* text, uint16_t color = White, uint8_t scale = 1, uint16_t background = Black);
 ```
 
 Draws one null-terminated line using the driver's five-column, seven-row font. Each character occupies a cell `6 * scale` pixels wide and `7 * scale` pixels tall, including a spacing column. Each cell is filled with `background` before its character is drawn. Scale 2 doubles each glyph pixel in both directions.
@@ -207,9 +199,7 @@ Argument order is **color, scale, background**. The underlying driver's `drawTex
 ### Presentation
 
 ```cpp
-void present(std::int16_t x = 0, std::int16_t y = 0,
-             std::uint8_t width = Width,
-             std::uint8_t height = Height);
+void present(int16_t x = 0, int16_t y = 0, uint8_t width = Width, uint8_t height = Height);
 ```
 
 Sends the selected framebuffer rectangle to the physical display. No arguments means the whole screen. Negative or overflowing regions are clipped; empty and fully off-screen regions do nothing. The framebuffer is unchanged by presentation.
@@ -231,7 +221,7 @@ For scrolling gameplay, redraw the scene in RAM and present every region where t
 
 DisplayManager contains no game screen layouts. [MainMenu](src/game/main_menu.h) owns both the title and selection screens: `renderTitle(DisplayManager&)` draws the welcome screen, and `render(DisplayManager&, MenuOption)` draws the menu and highlights the selected game. Both present the completed screen before returning. Menu selections are `MenuOption::Practice`, `MenuOption::SwimmyFish`, and the size marker `MenuOption::Count`. GameManager handles navigation and launching games; the view only draws.
 
-Instructions belong to `Tutorial::render(MenuOption)` in [tutorial.h](src/game/tutorial.h), which draws and presents the completed view. The live counter belongs to [Score](src/game/score.h), constructed with a `DisplayManager&`. `init(bool accuracy = false)` resets its single unsigned value and selects plain number or percent formatting; `update(unsigned score)` replaces that value, clamping percentages to 100; `value()` reads it. `render(std::uint16_t background = DisplayManager::Black)` draws the value in the upper-right corner in RAM only. Each game presents the score region with its scene. Practice supplies `accuracyPercent()` in percent mode. Swimmy Fish adds one point when each pipe has fully passed the fish, guarded by `pipe.scored`, and uses its scene background behind the number. No separate results screen is implemented by `Score`.
+Instructions belong to `Tutorial::render(MenuOption)` in [tutorial.h](src/game/tutorial.h), which draws and presents the completed view. The live counter belongs to [Score](src/game/score.h), constructed with a `DisplayManager&`. `init(bool accuracy = false)` resets its single unsigned value and selects plain number or percent formatting; `update(unsigned score)` replaces that value, clamping percentages to 100; `value()` reads it. `render(uint16_t background = DisplayManager::Black)` draws the value in the upper-right corner in RAM only. Each game presents the score region with its scene. Practice supplies `accuracyPercent()` in percent mode. Swimmy Fish adds one point when each pipe has fully passed the fish, guarded by `pipe.scored`, and uses its scene background behind the number. No separate results screen is implemented by `Score`.
 
 [GameManager](src/game/game_manager.h) receives references to input, display, and buzzer, and owns the menu, shared `Score`, both games, and the tutorial view. It passes the score to both games by reference; each game's `start()` resets its value and formatting. It stores the current `GameState` by value, handles remote navigation in `update(float dt)`, and draws the active state in `render()`. `stateTransition(GameState)` stops audio, marks the new screen for drawing, and starts a game when entering its state. `init()` selects Practice and enters the title screen. Games still launch directly from the menu; Practice restarts when finished, and Swimmy Fish returns to the menu. The instructions state remains available through `stateTransition(GameState::Instructions)`. Main initializes hardware, calls input/audio updates and `GameManager::update()`/`render()`, and maintains the 30 FPS timing and frequent audio updates.
 
@@ -247,9 +237,9 @@ Header: [buzzer.h](src/engine/output/buzzer.h). Implementation: [buzzer.cpp](src
 | --- | --- |
 | `explicit Buzzer(unsigned int pin)` | Stores the GPIO and determines its PWM slice/channel. Initializes playback state without starting a tone. The current application uses GPIO 8. |
 | `void init()` | Connects the pin to PWM and initializes the output as silent. Call before `play()`. |
-| `void play(std::uint32_t frequency, std::uint32_t duration, std::uint8_t volume = 255, std::uint8_t release_volume = 255)` | Starts a PWM tone. Frequency is in hertz; duration is in milliseconds. Volume ranges from 0 (silent) to 255 (50% duty); lower values narrow the pulses without changing GPIO voltage. `release_volume = 255` holds the initial volume until the deadline. A smaller release value gives a 20 ms ping, then drops to that level (limited to the starting volume) and fades to zero during the remaining duration. For short sounds the ping is limited to one quarter of the duration. Zero frequency, duration, or starting volume stops playback; a zero release value silences the tail after the ping. Replaces current playback without waiting. |
+| `void play(uint32_t frequency, uint32_t duration, uint8_t volume = 255, uint8_t release_volume = 255)` | Starts a PWM tone. Frequency is in hertz; duration is in milliseconds. Volume ranges from 0 (silent) to 255 (50% duty); lower values narrow the pulses without changing GPIO voltage. `release_volume = 255` holds the initial volume until the deadline. A smaller release value gives a 20 ms ping, then drops to that level (limited to the starting volume) and fades to zero during the remaining duration. For short sounds the ping is limited to one quarter of the duration. Zero frequency, duration, or starting volume stops playback; a zero release value silences the tail after the ping. Replaces current playback without waiting. |
 | `void stop()` | Immediately sets the output level to zero, disables the PWM slice, and clears playback state. |
-| `void sweep(std::uint32_t start_frequency, std::uint32_t end_frequency, std::uint32_t duration = 1000, std::uint8_t release_volume = 32)` | Starts a linear pitch sweep at full volume, with the same ping/release envelope as `play()`. The default drops to release level 32 and fades to zero. Duration is milliseconds for the entire sound. Zero frequency or duration stops playback. Nonzero frequencies for both `play()` and `sweep()` are clamped to 20–20000 Hz. Swimmy currently uses `sweep(160, 800, 300, 32)`. |
+| `void sweep(uint32_t start_frequency, uint32_t end_frequency, uint32_t duration = 1000, uint8_t release_volume = 32)` | Starts a linear pitch sweep at full volume, with the same ping/release envelope as `play()`. The default drops to release level 32 and fades to zero. Duration is milliseconds for the entire sound. Zero frequency or duration stops playback. Nonzero frequencies for both `play()` and `sweep()` are clamped to 20–20000 Hz. Swimmy currently uses `sweep(160, 800, 300, 32)`. |
 | `void update()` | Advances a sweep's pitch and fade, and stops playback at its deadline. Call regularly; without this call, timed playback continues. Main calls this approximately every 2 ms during its frame wait and once before game updates; rendering can delay calls. |
 
 The tone's end time is checked when `update()` runs, so stopping can be delayed by other work in the loop. The hardware frequency is determined by the PWM divider and wrap settings and can differ slightly from the requested frequency. Because PWM configuration and disabling affect a whole slice, do not independently drive another output on that slice without coordinating it.
