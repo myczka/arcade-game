@@ -9,7 +9,7 @@ void MainMenu::renderTitle(DisplayManager& display) {
     display.drawRectangle(12, 48, 104, 32, Cyan);
     display.drawRectangle(13, 49, 102, 30, DisplayManager::Black);
     display.drawText(37, 60, "SWIMMY FISH", Cyan);
-    display.drawText(31, 100, "Press ENTER");
+    display.drawText(31, 100, "Press OK");
     display.drawText(31, 115, "to continue");
     display.present();
 }
