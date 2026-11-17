@@ -93,67 +93,6 @@ void Practice::update(float dt) {
     }
 }
 
-/* Optimized rendering, disabled while comparing the earlier version.
-void Practice::render() {
-    if (fullPresentNeeded_) {
-        display_.clear();
-        display_.drawText(4, 4, "PRACTICE");
-    }
-
-    const unsigned accuracy = accuracyPercent();
-    char buffer[24];
-    if (fullPresentNeeded_ || accuracy != displayedAccuracy_) {
-        display_.drawRectangle(76, 4, DisplayManager::Width - 76, 7,
-                               DisplayManager::Black);
-        std::snprintf(buffer, sizeof(buffer), "ACC %u%%", accuracy);
-        display_.drawText(76, 4, buffer);
-    }
-
-    // Restore only the moving lane; unchanged text stays in the framebuffer.
-    display_.drawRectangle(0, NoteY - 2, DisplayManager::Width, NoteHeight + 4,
-                           DisplayManager::Black);
-    display_.drawRectangle(HitZoneX, NoteY - 2, HitZoneWidth, NoteHeight + 4,
-                           TargetColor);
-
-    for (const Note& note : notes_) {
-        if (!note.active || note.x + NoteWidth <= 0.0f ||
-            note.x >= DisplayManager::Width) {
-            continue;
-        }
-
-        display_.drawRectangle(static_cast<int16_t>(std::floor(note.x)), NoteY,
-                               static_cast<uint8_t>(NoteWidth),
-                               NoteHeight, colorValue(note.color));
-    }
-
-    unsigned remaining = 0;
-    if (elapsed_ < GameDuration) {
-        remaining = static_cast<unsigned>(std::ceil(GameDuration - elapsed_));
-    }
-    if (fullPresentNeeded_ || remaining != displayedRemaining_) {
-        display_.drawRectangle(4, 145, DisplayManager::Width - 4, 7,
-                               DisplayManager::Black);
-        std::snprintf(buffer, sizeof(buffer), "TIME %u", remaining);
-        display_.drawText(4, 145, buffer);
-    }
-    if (fullPresentNeeded_) {
-        display_.present();
-        fullPresentNeeded_ = false;
-    } else {
-        // Covers old/new note positions and restores the hit-zone background.
-        display_.present(0, NoteY - 2, DisplayManager::Width, NoteHeight + 4);
-        if (accuracy != displayedAccuracy_) {
-            display_.present(76, 4, DisplayManager::Width - 76, 7);
-        }
-        if (remaining != displayedRemaining_) {
-            display_.present(4, 145, DisplayManager::Width - 4, 7);
-        }
-    }
-    displayedAccuracy_ = accuracy;
-    displayedRemaining_ = remaining;
-}
-
-*/
 
 void Practice::render() {
     display_.clear();

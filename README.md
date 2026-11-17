@@ -10,7 +10,7 @@ A Raspberry Pi Pico arcade project with two game modes:
 - IR remote for menu navigation
 
 ## Outputs
-- TFT display instructions and results
+- TFT display menus, gameplay, and results
 - Buzzer feedback
 
 ## Expected Final Behavior

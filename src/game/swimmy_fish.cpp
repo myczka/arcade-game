@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <cmath>
 #include <array>
-#include <cstdio>
 
 #include "pico/rand.h"
 
@@ -33,9 +32,7 @@ void SwimmyFish::fishLocation() {
 }
 
 bool SwimmyFish::hasCollision() const {
-    if (fish_left < 0.0f || fish_right > DisplayManager::Width ||
-        fish_top < 0.0f) {
-        std::printf("Swimmy collision: screen; fish x=[%d,%d] y=[%d,%d], screen=%ux%u\n", static_cast<int>(fish_left), static_cast<int>(fish_right), static_cast<int>(fish_top), static_cast<int>(fish_bottom), static_cast<unsigned>(DisplayManager::Width), static_cast<unsigned>(DisplayManager::Height));
+    if (fish_top < 0.0f) {
         return true;
     }
 
@@ -49,7 +46,6 @@ bool SwimmyFish::hasCollision() const {
         const float gap_top = std::floor(pipe.gap_y - GAP_HEIGHT / 2.0f);
         const float gap_bottom = gap_top + GAP_HEIGHT;
         if (fish_top < gap_top || fish_bottom > gap_bottom) {
-            std::printf("Swimmy collision: pipe; fish x=[%d,%d] y=[%d,%d], pipe x=[%d,%d], gap y=[%d,%d]\n", static_cast<int>(fish_left), static_cast<int>(fish_right), static_cast<int>(fish_top), static_cast<int>(fish_bottom), static_cast<int>(pipe_left), static_cast<int>(pipe_left + PIPE_WIDTH), static_cast<int>(gap_top), static_cast<int>(gap_bottom));
             return true;
         }
     }
@@ -78,6 +74,7 @@ void SwimmyFish::start() {
     buzzer_.stop();
 }
 
+// Update function that runs in game loop
 void SwimmyFish::update(float dt) {
     if (!running_ || dt <= 0.0f) {
         return;
@@ -144,7 +141,7 @@ void SwimmyFish::render() {
     display_.clear(BACKGROUND);
     drawPipes();
 
-    // Briefly use the neutral pose after each flap, then follow velocity.
+    // forces the neutral frame for 2 frames after button press
     unsigned frame = 1;
     if (transition_frames_ > 0 || transition_frames_ < 0) {
         frame = 1;
@@ -153,6 +150,7 @@ void SwimmyFish::render() {
     } else if (fish_velocity > 0) {
         frame = 2;
     }
+    
     const auto draw_y = static_cast<int16_t>(std::floor(fish_y));
     display_.drawSprite(fish_x, draw_y, fish_sprs.at(static_cast<int>(color_state_))[frame], 32, 32);
 

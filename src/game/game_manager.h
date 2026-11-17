@@ -7,12 +7,10 @@
 #include "practice.h"
 #include "score.h"
 #include "swimmy_fish.h"
-#include "tutorial.h"
 
 enum class GameState {
     Title,
     MainMenu,
-    Instructions,
     PracticeGame,
     SwimmyFish,
     Results
@@ -36,7 +34,6 @@ class GameManager {
     Score score_;
     Practice practice_;
     SwimmyFish fishy_time_;
-    Tutorial tutorial_;
     GameState currentState = GameState::Title;
     MenuOption selected = MenuOption::SwimmyFish;
     bool screenNeedsUpdate = true;

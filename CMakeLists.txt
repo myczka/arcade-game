@@ -36,7 +36,6 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 add_executable(arcade-game
     src/main.cpp
-    src/game.cpp
     src/engine/input/input_manager.cpp
     src/engine/input/ir_remote.cpp
     src/engine/output/buzzer.cpp
@@ -46,7 +45,6 @@ add_executable(arcade-game
     src/game/swimmy_fish.cpp
     src/game/practice.cpp
     src/game/score.cpp
-    src/game/tutorial.cpp
 )
 
 pico_set_program_name(arcade-game "arcade-game")

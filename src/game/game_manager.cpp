@@ -1,6 +1,5 @@
 #include "game_manager.h"
 
-#include <cstdio>
 
 namespace {
 constexpr int MenuOptionCount = static_cast<int>(MenuOption::Count);
@@ -24,8 +23,7 @@ bool isRemoteExit(int command) {
 
 GameManager::GameManager(InputManager& input, DisplayManager& display, Buzzer& buzzer)
     : input_(input), display_(display), buzzer_(buzzer), score_(display),
-      practice_(input, display, buzzer, score_), fishy_time_(input, display, buzzer, score_),
-      tutorial_(display) {}
+      practice_(input, display, buzzer, score_), fishy_time_(input, display, buzzer, score_) {}
 
 void GameManager::init() {
     selected = MenuOption::SwimmyFish;
@@ -56,9 +54,6 @@ void GameManager::openSelectedOption() {
 
 void GameManager::update(float dt) {
     const int command = input_.getRemoteCommand();
-    if (command >= 0) {
-        std::printf("IR command: 0x%02X\n", command);
-    }
 
     switch (currentState) {
         case GameState::Title:
@@ -75,12 +70,6 @@ void GameManager::update(float dt) {
                 selected = static_cast<MenuOption>((static_cast<int>(selected) + 1) % MenuOptionCount);
                 screenNeedsUpdate = true;
             } else if (isRemoteEnter(command)) {
-                openSelectedOption();
-            }
-            break;
-
-        case GameState::Instructions:
-            if (isRemoteEnter(command)) {
                 openSelectedOption();
             }
             break;
@@ -121,13 +110,6 @@ void GameManager::render() {
         case GameState::MainMenu:
             if (screenNeedsUpdate) {
                 menu_.render(display_, selected);
-                screenNeedsUpdate = false;
-            }
-            break;
-
-        case GameState::Instructions:
-            if (screenNeedsUpdate) {
-                tutorial_.render(selected);
                 screenNeedsUpdate = false;
             }
             break;
