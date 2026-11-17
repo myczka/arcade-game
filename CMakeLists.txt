@@ -42,8 +42,11 @@ add_executable(arcade-game
     src/engine/output/buzzer.cpp
     src/engine/output/display_manager.cpp
     src/game/main_menu.cpp
+    src/game/game_manager.cpp
     src/game/swimmy_fish.cpp
     src/game/practice.cpp
+    src/game/score.cpp
+    src/game/tutorial.cpp
 )
 
 pico_set_program_name(arcade-game "arcade-game")
