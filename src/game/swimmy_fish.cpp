@@ -99,7 +99,7 @@ void SwimmyFish::update(float dt) {
     if (input_.wasPressed(color_state_)) {
         fish_velocity = -103;
         transition_frames_ = 2;
-        buzzer_.sweep(160, 800, 300, 32);
+        buzzer_.sweep(160, 800, 300);
     }
     else if (fish_velocity == 0) {
         transition_frames_ = -3;

@@ -62,14 +62,14 @@ void Buzzer::setTone(uint32_t frequency, uint8_t volume, bool restart) {
     pwm_set_chan_level(slice, channel, (top / 2) * volume / 255u);
 }
 
-void Buzzer::sweep(uint32_t start_frequency, uint32_t end_frequency, uint32_t duration, uint8_t release_volume) {
+void Buzzer::sweep(uint32_t start_frequency, uint32_t end_frequency, uint32_t duration) {
     if (start_frequency == 0 || end_frequency == 0 || duration == 0) {
         stop();
         return;
     }
     sweep_start_frequency = std::clamp<uint32_t>(start_frequency, 20, 20000);
     sweep_end_frequency = std::clamp<uint32_t>(end_frequency, 20, 20000);
-    play(sweep_start_frequency, duration, 255, release_volume);
+    play(sweep_start_frequency, duration);
     sweeping = true;
 }
 
