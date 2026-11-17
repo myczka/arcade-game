@@ -28,7 +28,7 @@ GameManager::GameManager(InputManager& input, DisplayManager& display, Buzzer& b
       tutorial_(display) {}
 
 void GameManager::init() {
-    selected = MenuOption::Practice;
+    selected = MenuOption::SwimmyFish;
     stateTransition(GameState::Title);
 }
 
@@ -44,11 +44,13 @@ void GameManager::stateTransition(GameState newState) {
     }
 }
 
-void GameManager::startSelectedGame() {
+void GameManager::openSelectedOption() {
     if (selected == MenuOption::Practice) {
         stateTransition(GameState::PracticeGame);
     } else if (selected == MenuOption::SwimmyFish) {
         stateTransition(GameState::SwimmyFish);
+    } else if (selected == MenuOption::Results) {
+        stateTransition(GameState::Results);
     }
 }
 
@@ -73,13 +75,13 @@ void GameManager::update(float dt) {
                 selected = static_cast<MenuOption>((static_cast<int>(selected) + 1) % MenuOptionCount);
                 screenNeedsUpdate = true;
             } else if (isRemoteEnter(command)) {
-                startSelectedGame();
+                openSelectedOption();
             }
             break;
 
         case GameState::Instructions:
             if (isRemoteEnter(command)) {
-                startSelectedGame();
+                openSelectedOption();
             }
             break;
 
@@ -96,6 +98,12 @@ void GameManager::update(float dt) {
                 stateTransition(GameState::MainMenu);
             } else {
                 fishy_time_.update(dt);
+            }
+            break;
+
+        case GameState::Results:
+            if (isRemoteExit(command) || isRemoteEnter(command)) {
+                stateTransition(GameState::MainMenu);
             }
             break;
     }
@@ -127,14 +135,23 @@ void GameManager::render() {
         case GameState::PracticeGame:
             practice_.render();
             if (practice_.isFinished()) {
-                practice_.start();
+                score_.finish();
+                stateTransition(GameState::MainMenu);
             }
             break;
 
         case GameState::SwimmyFish:
             fishy_time_.render();
             if (fishy_time_.isFinished()) {
+                score_.finish();
                 stateTransition(GameState::MainMenu);
+            }
+            break;
+
+        case GameState::Results:
+            if (screenNeedsUpdate) {
+                score_.renderResults();
+                screenNeedsUpdate = false;
             }
             break;
     }

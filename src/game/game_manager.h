@@ -14,7 +14,8 @@ enum class GameState {
     MainMenu,
     Instructions,
     PracticeGame,
-    SwimmyFish
+    SwimmyFish,
+    Results
 };
 
 class GameManager {
@@ -26,7 +27,7 @@ class GameManager {
     void stateTransition(GameState newState);
 
    private:
-    void startSelectedGame();
+    void openSelectedOption();
 
     InputManager& input_;
     DisplayManager& display_;
@@ -37,6 +38,6 @@ class GameManager {
     SwimmyFish fishy_time_;
     Tutorial tutorial_;
     GameState currentState = GameState::Title;
-    MenuOption selected = MenuOption::Practice;
+    MenuOption selected = MenuOption::SwimmyFish;
     bool screenNeedsUpdate = true;
 };

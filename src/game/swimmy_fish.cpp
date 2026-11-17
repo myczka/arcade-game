@@ -14,6 +14,7 @@
 
 using FishFrames = const uint16_t (*)[1024];
 
+constexpr std::array<uint32_t, 4> color_freqs = {110, 147, 261, 783};
 const std::array<FishFrames, static_cast<size_t>(Color::Count)> fish_sprs = {
     red_fish,
     green_fish,
@@ -99,7 +100,7 @@ void SwimmyFish::update(float dt) {
 
     // Check button but also sets transition frames for up/down
     if (input_.wasPressed(color_state_)) {
-        fish_velocity = -90;
+        fish_velocity = -103;
         transition_frames_ = 2;
         buzzer_.sweep(160, 800, 300, 32);
     }
@@ -122,10 +123,13 @@ void SwimmyFish::update(float dt) {
     // Checks if running?
     if (running_) {
         for (Pipe& pipe : pipes) {
-            if (!pipe.scored && std::floor(pipe.x) >= fish_right) {
+            if (!pipe.scored && std::floor(pipe.x) > fish_cntr_x) {
                 pipe.scored = true;
                 score_.update(score_.value() + 1);
                 color_state_ = static_cast<Color>(get_rand_32() % 4u);
+                
+                // Ding for color change
+                buzzer_.play(color_freqs.at(static_cast<int>(color_state_)), 500, 250, 30);
             }
         }
     }

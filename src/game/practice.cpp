@@ -13,8 +13,8 @@ constexpr uint16_t Blue = 0x001f;
 constexpr uint16_t Yellow = 0xfc00;
 constexpr uint16_t TargetColor = 0xffff;
 
-constexpr uint8_t NoteY = 124;
 constexpr uint8_t NoteHeight = 12;
+constexpr uint8_t NoteY = (DisplayManager::Height - NoteHeight) / 2;
 constexpr uint8_t HitZoneX = 8;
 constexpr uint8_t HitZoneWidth = 16;
 

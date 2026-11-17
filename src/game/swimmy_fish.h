@@ -14,7 +14,7 @@ struct Pipe {
 
 class SwimmyFish {
     public:
-        static constexpr float GRAVITY = 300;
+        static constexpr float GRAVITY = 230;
         //static constexpr uint16_t BACKGROUND = 0x421F;
         static constexpr uint16_t BACKGROUND = 0x409a;
 
