@@ -24,18 +24,18 @@ private:
     void setTone(uint32_t frequency, uint8_t volume, bool restart = false);
     // Used to initilize the pin for the buzzer
     // The pin is set in the constructor and cannot be changed after initialization.
-    unsigned int pin;
-    unsigned int slice;
-    unsigned int channel;
+    unsigned int pin_;
+    unsigned int slice_;
+    unsigned int channel_;
 
     // Indicates if the buzzer is currently playing and for how long
-    bool     is_playing;
-    uint64_t stop_time;
-    bool sweeping = false;
-    uint64_t start_time = 0;
+    bool     is_playing_;
+    uint64_t stop_time_;
+    bool sweeping_ = false;
+    uint64_t start_time_ = 0;
     uint8_t start_volume_ = 255;
     uint8_t release_volume_ = 255;
-    uint32_t sweep_start_frequency = 0;
-    uint32_t sweep_end_frequency = 0;
+    uint32_t sweep_start_frequency_ = 0;
+    uint32_t sweep_end_frequency_ = 0;
 
 };
