@@ -26,26 +26,26 @@ SwimmyFish::SwimmyFish(InputManager& input, DisplayManager& display, Buzzer& buz
 }
 
 void SwimmyFish::fishLocation() {
-    fish_cntr_y = fish_y + 16;
-    fish_top = fish_cntr_y - 5;
-    fish_bottom = fish_cntr_y + 5;
+    fish.center_y = fish.y + 16;
+    fish.top = fish.center_y - 5;
+    fish.bottom = fish.center_y + 5;
 }
 
 bool SwimmyFish::hasCollision() const {
-    if (fish_top < 0.0f) {
+    if (fish.top < 0.0f) {
         return true;
     }
 
     for (const Pipe& pipe : pipes) {
         const float pipe_left = std::floor(pipe.x);
-        const bool overlaps_x = fish_right > pipe_left &&
-                                fish_left < pipe_left + PIPE_WIDTH;
+        const bool overlaps_x = fish.right > pipe_left &&
+                                fish.left < pipe_left + PIPE_WIDTH;
         if (!overlaps_x) {
             continue;
         }
         const float gap_top = std::floor(pipe.gap_y - GAP_HEIGHT / 2.0f);
         const float gap_bottom = gap_top + GAP_HEIGHT;
-        if (fish_top < gap_top || fish_bottom > gap_bottom) {
+        if (fish.top < gap_top || fish.bottom > gap_bottom) {
             return true;
         }
     }
@@ -53,25 +53,25 @@ bool SwimmyFish::hasCollision() const {
 }
 
 void SwimmyFish::start() {
-    //fish_x = fish_start_x;
-    fish_y = fish_start_y;
+    fish.y = fish.start_y;
 
-    fish_velocity = 0;
-    transition_frames_ = 0;
+    fish.velocity = 0;
+    fish.transition_frames = 0;
     ready_frames_ = 30;
     running_ = true;
     score_.init(false);
-    color_state_ = static_cast<Color>(get_rand_32() % 4u);
-
-    display_.drawSprite(fish_x, fish_y, fish_sprs.at(static_cast<int>(color_state_))[1], 32, 32);
+    fish.color = static_cast<Color>(get_rand_32() % 4u);
 
     for (unsigned i = 0; i < 2; ++i) {
         resetPipe(pipes[i], -static_cast<float>(PIPE_SPACING) - i * PIPE_SPACING);
+        prev_pipes[i] = pipes[i];
     }
-    full_present_needed = true;
     fishLocation();
+    fish.displayed_y = static_cast<int16_t>(std::floor(fish.y));
 
     buzzer_.stop();
+    display_.clear(BACKGROUND);
+    display_.present();
 }
 
 // Update function that runs in game loop
@@ -85,48 +85,48 @@ void SwimmyFish::update(float dt) {
         return;
     }
     //meth
-    fish_velocity = fish_velocity + GRAVITY * dt;
-    fish_y = fish_y + fish_velocity * dt;
+    fish.velocity = fish.velocity + GRAVITY * dt;
+    fish.y = fish.y + fish.velocity * dt;
 
     // Evaluate transition frames for up and down
-    if (transition_frames_ > 0) {
-        --transition_frames_;
-    } else if (transition_frames_ < 0) {
-        ++transition_frames_;
+    if (fish.transition_frames > 0) {
+        --fish.transition_frames;
+    } else if (fish.transition_frames < 0) {
+        ++fish.transition_frames;
     }
 
     // Check button but also sets transition frames for up/down
-    if (input_.wasPressed(color_state_)) {
-        fish_velocity = -103;
-        transition_frames_ = 2;
+    if (input_.wasPressed(fish.color)) {
+        fish.velocity = -103;
+        fish.transition_frames = 2;
         buzzer_.sweep(160, 800, 300);
     }
-    else if (fish_velocity == 0) {
-        transition_frames_ = -3;
+    else if (fish.velocity == 0) {
+        fish.transition_frames = -3;
     }
     
     // For the love of the game
-    //color_state_ = static_cast<Color>(get_rand_32() % 4u);
+    //fish.color = static_cast<Color>(get_rand_32() % 4u);
 
     fishLocation();
     updatePipes(dt);
 
     if (hasCollision()) {
         running_ = false;
-        fish_velocity = 0.0f;
+        fish.velocity = 0.0f;
         buzzer_.stop();
     }
 
     // Checks if running?
     if (running_) {
         for (Pipe& pipe : pipes) {
-            if (!pipe.scored && std::floor(pipe.x) > fish_cntr_x) {
+            if (!pipe.scored && std::floor(pipe.x) > fish.center_x) {
                 pipe.scored = true;
                 score_.update(score_.value() + 1);
-                color_state_ = static_cast<Color>(get_rand_32() % 4u);
+                fish.color = static_cast<Color>(get_rand_32() % 4u);
                 
                 // Ding for color change
-                buzzer_.play(color_freqs.at(static_cast<int>(color_state_)), 500, 250, 30);
+                buzzer_.play(color_freqs.at(static_cast<int>(fish.color)), 500, 250, 30);
             }
         }
     }
@@ -143,40 +143,35 @@ void SwimmyFish::render() {
 
     // forces the neutral frame for 2 frames after button press
     unsigned frame = 1;
-    if (transition_frames_ > 0 || transition_frames_ < 0) {
+    if (fish.transition_frames > 0 || fish.transition_frames < 0) {
         frame = 1;
-    } else if (fish_velocity < 0) {
+    } else if (fish.velocity < 0) {
         frame = 0;
-    } else if (fish_velocity > 0) {
+    } else if (fish.velocity > 0) {
         frame = 2;
     }
     
-    const auto draw_y = static_cast<int16_t>(std::floor(fish_y));
-    display_.drawSprite(fish_x, draw_y, fish_sprs.at(static_cast<int>(color_state_))[frame], 32, 32);
+    const auto draw_y = static_cast<int16_t>(std::floor(fish.y));
+    display_.drawSprite(fish.x, draw_y, fish_sprs.at(static_cast<int>(fish.color))[frame], 32, 32);
 
     score_.render();
 
-    if (full_present_needed) {
-        display_.present();
-        full_present_needed = false;
-    } else {
-        for (unsigned i = 0; i < 2; ++i) {
-            if (pipes[i].x < displayed_pipes[i].x) {
-                // Recycling jumps across the screen: erase and draw separately.
-                presentPipeRegion(displayed_pipes[i], displayed_pipes[i]);
-                presentPipeRegion(pipes[i], pipes[i]);
-            } else {
-                presentPipeRegion(displayed_pipes[i], pipes[i]);
-            }
-        }
-        // Both regions use the finished scene, erasing the old fish position.
-        display_.present(fish_x, displayed_fish_y_, 32, 32);
-        display_.present(fish_x, draw_y, 32, 32);
-        display_.present(Score::X, Score::Y, Score::Width, Score::Height);
-    }
-    displayed_fish_y_ = draw_y;
     for (unsigned i = 0; i < 2; ++i) {
-        displayed_pipes[i] = pipes[i];
+        if (pipes[i].x < prev_pipes[i].x) {
+            // Recycling jumps across the screen: erase and draw separately.
+            presentPipeRegion(prev_pipes[i], prev_pipes[i]);
+            presentPipeRegion(pipes[i], pipes[i]);
+        } else {
+            presentPipeRegion(prev_pipes[i], pipes[i]);
+        }
+    }
+    // Both regions use the finished scene, erasing the old fish position.
+    display_.present(fish.x, fish.displayed_y, 32, 32);
+    display_.present(fish.x, draw_y, 32, 32);
+    display_.present(Score::X, Score::Y, Score::Width, Score::Height);
+    fish.displayed_y = draw_y;
+    for (unsigned i = 0; i < 2; ++i) {
+        prev_pipes[i] = pipes[i];
     }
 
 }
