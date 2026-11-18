@@ -1,9 +1,8 @@
 #pragma once
 
-#include "engine/output/buzzer.h"
-#include "engine/output/display_manager.h"
-
 #include "engine/input/input_manager.h"
+#include "engine/output/display_manager.h"
+#include "engine/output/buzzer.h"
 #include "score.h"
 
 struct Pipe {
@@ -33,10 +32,6 @@ struct Fish {
 
 class SwimmyFish {
     public:
-        static constexpr float GRAVITY = 230;
-        //static constexpr uint16_t BACKGROUND = 0x421F;
-        static constexpr uint16_t BACKGROUND = 0x409a;
-
         SwimmyFish(InputManager& input, DisplayManager& display, Buzzer& buzzer, Score& score);
 
         void start();
@@ -46,6 +41,7 @@ class SwimmyFish {
         bool isFinished() const;
 
     private:
+        // Helper functions
         void fishLocation();
         bool hasCollision() const;
         void resetPipe(Pipe& pipe, float x);
@@ -53,6 +49,11 @@ class SwimmyFish {
         void drawPipes();
         void presentPipeRegion(const Pipe& previous, const Pipe& current);
 
+        // General constants
+        static constexpr float GRAVITY = 230;
+        static constexpr uint16_t BACKGROUND = 0x409a;
+
+        // Pipe constants
         static constexpr uint8_t PIPE_WIDTH = 18;
         static constexpr uint8_t GAP_HEIGHT = 77;
         static constexpr uint8_t PIPE_MARGIN = 12;
