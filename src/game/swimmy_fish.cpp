@@ -97,12 +97,12 @@ void SwimmyFish::update(float dt) {
 
     // Check button but also sets transition frames for up/down
     if (input_.wasPressed(fish.color)) {
-        fish.velocity = -103;
+        fish.velocity = -130;
         fish.transition_frames = 2;
         buzzer_.sweep(160, 800, 300);
     }
     else if (fish.velocity == 0) {
-        fish.transition_frames = -3;
+        fish.transition_frames = -7;
     }
     
     // For the love of the game

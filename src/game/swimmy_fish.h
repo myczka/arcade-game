@@ -13,7 +13,7 @@ struct Pipe {
 
 struct Fish {
     const float start_y = 64;
-    const float x = 48;
+    const float x = 55;
     const float center_x = x + 16;
     const float left = center_x - 11;
     const float right = center_x + 7;
@@ -50,7 +50,7 @@ class SwimmyFish {
         void presentPipeRegion(const Pipe& previous, const Pipe& current);
 
         // General constants
-        static constexpr float GRAVITY = 230;
+        static constexpr float GRAVITY = 250;
         static constexpr uint16_t BACKGROUND = 0x409a;
 
         // Pipe constants
