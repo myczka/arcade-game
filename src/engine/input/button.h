@@ -20,4 +20,7 @@ struct Button {
     uint32_t pin;
     bool current = false;
     bool previous = false;
+    // Only the timer sampler changes these debounce fields after init().
+    bool candidate = false;
+    uint32_t candidateSinceUs = 0;
 };

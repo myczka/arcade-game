@@ -56,8 +56,9 @@ Header: [input_manager.h](src/engine/input/input_manager.h). Implementation: [in
 | Public function | Behavior |
 | --- | --- |
 | `InputManager()` | Creates the button records for the four configured GPIO pins and allocates an `IRRemote` for `REMOTE_GPIO`. Does not configure GPIO until `init()`. |
-| `void init()` | Configures the buttons as inputs with pull-ups, records their initial levels, and initializes the remote receiver. Wiring is active-low: pressing a button connects its input to ground. |
-| `void update()` | Moves each button's current state into its previous state, samples the new state, and polls the receiver for an accepted remote command. Call once per input sampling cycle. |
+| `void init()` | Configures active-low buttons with pull-ups, records consistent logical initial states, initializes the remote receiver, and starts a 1 ms sampling timer. Button changes must remain stable for 5 ms. Repeated initialization is ignored; timer allocation failure reports a fatal initialization error. |
+| `~InputManager()` | Cancels the button sampling timer so it no longer references this object. |
+| `void update()` | Snapshots pending debounced button events and held states, clears the pending events, and polls the receiver for an accepted remote command. Call once per game frame, on the same core as initialization. |
 
 ### Button queries
 
@@ -65,13 +66,11 @@ Each query takes one of `Color::Red`, `Color::Green`, `Color::Blue`, or `Color::
 
 | Public function | Returns |
 | --- | --- |
-| `bool wasPressed(Color color) const` | `true` when the current sample is pressed and the previous sample was released. |
-| `bool wasReleased(Color color) const` | `true` when the current sample is released and the previous sample was pressed. |
+| `bool wasPressed(Color color) const` | `true` if a debounced press was captured since the previous `update()`, even if the button was released before this frame. |
+| `bool wasReleased(Color color) const` | `true` if a debounced release was captured since the previous `update()`. A completed tap can report both press and release in one frame. |
 | `bool isHeld(Color color) const` | Currently returns `true` only when both the current and previous samples are pressed. It is false on the first pressed sample. |
 
-These queries read stored samples. Calling a query does not consume the event, so repeated queries before the next `update()` give the same answer. Physical button debounce is not implemented.
-
-**Initialization detail:** `init()` currently stores raw GPIO levels, while `update()` stores inverted levels. The initial sample therefore uses the opposite meaning from later samples. For example, the first update can report a release for a button that was never pressed. This is existing behavior, not an intended input contract to rely on.
+These queries read a stable frame snapshot. Calling a query does not consume the event, so repeated queries before the next `update()` give the same answer. The short timer interrupt samples independently of rendering and frame pacing; only `update()` publishes events to game code. Multiple presses of the same button between two updates coalesce into one Boolean press event. Taps shorter than the 5 ms debounce interval are intentionally filtered. The timer does not update game logic or decode IR commands. InputManager is non-copyable and non-movable because its timer stores its address.
 
 ```cpp
 input.update();
@@ -104,6 +103,7 @@ Definitions: [button.h](src/engine/input/button.h).
 | `Color::Count` | Number of buttons: 4. |
 | `Button::pin` | GPIO assigned to that button. |
 | `Button::current`, `Button::previous` | Stored Boolean input samples. Both default to `false` before initialization. |
+| `Button::candidate`, `Button::candidateSinceUs` | Timer-owned raw candidate and its change timestamp, used to debounce input before publishing it. |
 
 `Button` is a data structure with no explicitly declared functions. There is no white physical button. White remains available as a graphics color.
 
