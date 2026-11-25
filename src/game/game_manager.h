@@ -13,6 +13,7 @@ enum class GameState {
     MainMenu,
     PracticeGame,
     SwimmyFish,
+    SwimmyFishGameOver,
     Results
 };
 
@@ -37,4 +38,6 @@ class GameManager {
     GameState currentState = GameState::Title;
     MenuOption selected = MenuOption::SwimmyFish;
     bool screenNeedsUpdate = true;
+    uint64_t gameOverUntil_ = 0;
+    uint64_t menuInputReadyAt_ = 0;
 };

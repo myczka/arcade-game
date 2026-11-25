@@ -8,7 +8,7 @@ void MainMenu::renderTitle(DisplayManager& display) {
     display.drawRectangle(2, 2, 124, 156, Cyan);
     display.drawRectangle(3, 3, 122, 154, Background);
     display.drawSprite((DisplayManager::Width - SWIMMY_FISH_WIDTH) / 2, 44, SWIMMY_FISH, SWIMMY_FISH_WIDTH, SWIMMY_FISH_HEIGHT);
-    display.drawText(31, 100, "Press ENTER", DisplayManager::White, 1, Background);
+    display.drawText(31, 100, "Press GREEN", DisplayManager::White, 1, Background);
     display.drawText(31, 115, "to continue", DisplayManager::White, 1, Background);
     display.present();
 }
@@ -43,6 +43,6 @@ void MainMenu::render(DisplayManager& display, MenuOption selected) {
     display.drawText(40, 53, "SWIMMY FISH", swimmy_color, 1, Background);
     display.drawText(40, 83, "PRACTICE", practice_color, 1, Background);
     display.drawText(43, 113, "RESULTS", results_color, 1, Background);
-    display.drawText(19, 140, "ENTER to select", DisplayManager::White, 1, Background);
+    display.drawText(19, 140, "GREEN to select", DisplayManager::White, 1, Background);
     display.present();
 }

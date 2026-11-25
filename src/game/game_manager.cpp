@@ -1,8 +1,11 @@
 #include "game_manager.h"
+#include "pico/time.h"
 
 
 namespace {
 constexpr int MenuOptionCount = static_cast<int>(MenuOption::Count);
+constexpr uint64_t GameOverDurationUs = 1250000;
+constexpr uint64_t MenuInputQuietUs = 250000;
 
 bool isRemoteUp(int command) {
     return command == 0x08;
@@ -31,6 +34,9 @@ void GameManager::init() {
 }
 
 void GameManager::stateTransition(GameState newState) {
+    if (currentState == GameState::SwimmyFishGameOver && newState == GameState::MainMenu) {
+        menuInputReadyAt_ = time_us_64() + MenuInputQuietUs;
+    }
     buzzer_.stop();
     currentState = newState;
     screenNeedsUpdate = true;
@@ -39,6 +45,8 @@ void GameManager::stateTransition(GameState newState) {
         practice_.start();
     } else if (newState == GameState::SwimmyFish) {
         fishy_time_.start();
+    } else if (newState == GameState::SwimmyFishGameOver) {
+        gameOverUntil_ = 0;
     }
 }
 
@@ -57,19 +65,35 @@ void GameManager::update(float dt) {
 
     switch (currentState) {
         case GameState::Title:
-            if (isRemoteEnter(command)) {
+            if (isRemoteEnter(command) || input_.wasPressed(Color::Green)) {
                 stateTransition(GameState::MainMenu);
             }
             break;
 
         case GameState::MainMenu:
+            if (menuInputReadyAt_ != 0) {
+                bool inputActive = command >= 0;
+                for (Color color : {Color::Red, Color::Green, Color::Blue, Color::Yellow}) {
+                    if (input_.wasPressed(color) || input_.isHeld(color)) {
+                        inputActive = true;
+                    }
+                }
+                const uint64_t now = time_us_64();
+                if (inputActive) {
+                    menuInputReadyAt_ = now + MenuInputQuietUs;
+                }
+                if (now < menuInputReadyAt_) {
+                    break;
+                }
+                menuInputReadyAt_ = 0;
+            }
             if (isRemoteUp(command)) {
                 selected = static_cast<MenuOption>((static_cast<int>(selected) + MenuOptionCount - 1) % MenuOptionCount);
                 screenNeedsUpdate = true;
-            } else if (isRemoteDown(command)) {
+            } else if (isRemoteDown(command) || input_.wasPressed(Color::Blue)) {
                 selected = static_cast<MenuOption>((static_cast<int>(selected) + 1) % MenuOptionCount);
                 screenNeedsUpdate = true;
-            } else if (isRemoteEnter(command)) {
+            } else if (isRemoteEnter(command) || input_.wasPressed(Color::Green)) {
                 openSelectedOption();
             }
             break;
@@ -91,7 +115,14 @@ void GameManager::update(float dt) {
             break;
 
         case GameState::Results:
-            if (isRemoteExit(command) || isRemoteEnter(command)) {
+            if (isRemoteExit(command) || isRemoteEnter(command) || input_.wasPressed(Color::Green)) {
+                stateTransition(GameState::MainMenu);
+            }
+            break;
+
+        case GameState::SwimmyFishGameOver:
+            // Input still gets polled by main, but cannot affect this screen.
+            if (gameOverUntil_ != 0 && time_us_64() >= gameOverUntil_) {
                 stateTransition(GameState::MainMenu);
             }
             break;
@@ -126,7 +157,16 @@ void GameManager::render() {
             fishy_time_.render();
             if (fishy_time_.isFinished()) {
                 score_.finish();
-                stateTransition(GameState::MainMenu);
+                stateTransition(GameState::SwimmyFishGameOver);
+            }
+            break;
+
+        case GameState::SwimmyFishGameOver:
+            if (screenNeedsUpdate) {
+                fishy_time_.renderGameOver();
+                // Count the visible interval after the transfer completes.
+                gameOverUntil_ = time_us_64() + GameOverDurationUs;
+                screenNeedsUpdate = false;
             }
             break;
 
