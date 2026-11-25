@@ -1,0 +1,1 @@
+1. walk me through adding floor collision that makes the fish ride along the bottom of the screen in neutral position like geometry dash? (put this in a branch and don't modify the engine
