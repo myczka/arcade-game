@@ -34,7 +34,7 @@ void Score::finish() {
     }
 }
 
-void Score::render(uint16_t background) {
+void Score::render(uint16_t background, uint16_t color) {
     char text[12];
 
     if (accuracy_) {
@@ -50,7 +50,7 @@ void Score::render(uint16_t background) {
 
     const auto x = static_cast<uint8_t>(DisplayManager::Width - 4 - std::strlen(text) * 6);
 
-    display_.drawText(x, Y, text, DisplayManager::White, 1, background);
+    display_.drawText(x, Y, text, color, 1, background);
 }
 
 void Score::renderResults() {

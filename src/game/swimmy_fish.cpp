@@ -11,6 +11,15 @@
 
 #include "pico/rand.h"
 
+namespace {
+uint16_t dimColor(uint16_t color) {
+    const unsigned red = ((color >> 11) & 31) * 3 / 4;
+    const unsigned green = ((color >> 5) & 63) * 3 / 4;
+    const unsigned blue = (color & 31) * 3 / 4;
+    return (red << 11) | (green << 5) | blue;
+}
+}
+
 using FishFrames = const uint16_t (*)[1024];
 
 constexpr std::array<uint32_t, 4> color_freqs = {110, 147, 261, 783};
@@ -97,7 +106,7 @@ void SwimmyFish::update(float dt) {
 
     // Check button but also sets transition frames for up/down
     if (input_.wasPressed(fish.color)) {
-        fish.velocity = -130;
+        fish.velocity = JUMP_SPEED;
         fish.transition_frames = 2;
         buzzer_.sweep(160, 800, 300);
     }
@@ -136,25 +145,71 @@ bool SwimmyFish::isFinished() const {
     return !running_;
 }
 
-void SwimmyFish::render() {
+int16_t SwimmyFish::drawScene(bool dimmed) {
     // Compose in RAM first. Fish sprites can be drawn after the pipes here.
-    display_.clear(BACKGROUND);
-    drawPipes();
+    uint16_t background = BACKGROUND;
+    uint16_t pipeColor = PIPE_COLOR;
+    uint16_t scoreColor = DisplayManager::White;
+    if (dimmed) {
+        background = dimColor(background);
+        pipeColor = dimColor(pipeColor);
+        scoreColor = dimColor(scoreColor);
+    }
+    display_.clear(background);
+    drawPipes(pipeColor);
 
     // forces the neutral frame for 2 frames after button press
     unsigned frame = 1;
-    if (fish.transition_frames > 0 || fish.transition_frames < 0) {
+    // if (fish.transition_frames > 0 || fish.transition_frames < 0) {
+    //     frame = 1;
+    // } 
+    if (fish.velocity > -15 && fish.velocity < 30) {
         frame = 1;
-    } else if (fish.velocity < 0) {
+    }
+    else if (fish.velocity < 0) {
         frame = 0;
     } else if (fish.velocity > 0) {
         frame = 2;
     }
     
     const auto draw_y = static_cast<int16_t>(std::floor(fish.y));
-    display_.drawSprite(fish.x, draw_y, fish_sprs.at(static_cast<int>(fish.color))[frame], 32, 32);
+    const uint16_t* sprite = fish_sprs.at(static_cast<int>(fish.color))[frame];
+    if (dimmed) {
+        // One row keeps temporary storage small on the Pico's stack.
+        uint16_t dimmedRow[32];
+        for (int row = 0; row < 32; ++row) {
+            for (unsigned column = 0; column < 32; ++column) {
+                const uint16_t pixel = sprite[row * 32 + column];
+                dimmedRow[column] = DisplayManager::Transparent;
+                if (pixel != DisplayManager::Transparent) {
+                    dimmedRow[column] = dimColor(pixel);
+                }
+            }
+            display_.drawSprite(fish.x, draw_y + row, dimmedRow, 32, 1);
+        }
+    } else {
+        display_.drawSprite(fish.x, draw_y, sprite, 32, 32);
+    }
 
-    score_.render();
+    score_.render(DisplayManager::Transparent, scoreColor);
+    return draw_y;
+}
+
+void SwimmyFish::renderGameOver() {
+    // Average red fish body tone, brightened by approximately 20%.
+    constexpr uint16_t GameOverColor = 0x8A88;
+    constexpr uint8_t TextX = (DisplayManager::Width - 9 * 6 * 2 - 1) / 2;
+    constexpr uint8_t TextY = (DisplayManager::Height - 7 * 2) / 2;
+
+    drawScene(true);
+    display_.drawText(TextX + 1, TextY + 1, "GAME OVER", DisplayManager::Black, 2, DisplayManager::Transparent);
+    display_.drawText(TextX, TextY, "GAME OVER", GameOverColor, 2, DisplayManager::Transparent);
+    display_.drawText(TextX + 1, TextY, "GAME OVER", GameOverColor, 2, DisplayManager::Transparent);
+    display_.present();
+}
+
+void SwimmyFish::render() {
+    const int16_t draw_y = drawScene(false);
 
     for (unsigned i = 0; i < 2; ++i) {
         if (pipes[i].x < prev_pipes[i].x) {
@@ -196,7 +251,7 @@ void SwimmyFish::updatePipes(float dt) {
     }
 }
 
-void SwimmyFish::drawPipes() {
+void SwimmyFish::drawPipes(uint16_t color) {
     for (const Pipe& pipe : pipes) {
         if (pipe.x >= DisplayManager::Width || pipe.x + PIPE_WIDTH <= 0.0f) {
             continue;
@@ -204,8 +259,8 @@ void SwimmyFish::drawPipes() {
         const auto x = static_cast<int16_t>(std::floor(pipe.x));
         const auto gap_top = static_cast<uint8_t>(std::floor(pipe.gap_y - GAP_HEIGHT / 2.0f));
         const auto gap_bottom = static_cast<uint8_t>(gap_top + GAP_HEIGHT);
-        display_.drawRectangle(x, 0, PIPE_WIDTH, gap_top, PIPE_COLOR);
-        display_.drawRectangle(x, gap_bottom, PIPE_WIDTH, DisplayManager::Height - gap_bottom, PIPE_COLOR);
+        display_.drawRectangle(x, 0, PIPE_WIDTH, gap_top, color);
+        display_.drawRectangle(x, gap_bottom, PIPE_WIDTH, DisplayManager::Height - gap_bottom, color);
     }
 }
 

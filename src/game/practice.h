@@ -27,7 +27,8 @@ private:
     };
 
     static constexpr std::size_t MaxNotes = 8;
-    static constexpr float NoteSpeed = 70.0f;
+    static constexpr float NoteStep = 2.0f;
+    static constexpr float NoteSpeed = NoteStep * 30.0f;
     static constexpr float SpawnInterval = 0.75f;
     static constexpr float HitZoneLeft = 8.0f;
     static constexpr float HitZoneRight = 24.0f;
@@ -37,7 +38,7 @@ private:
     static constexpr float LastSpawnTime = GameDuration -
         (DisplayManager::Width + NoteWidth) / NoteSpeed;
 
-    void spawnNote(float age);
+    void spawnNote();
     void resolveInput();
     bool tryHit(Color color);
     void removeMissedNotes();

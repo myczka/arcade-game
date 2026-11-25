@@ -37,6 +37,7 @@ class SwimmyFish {
         void start();
         void update(float dt);
         void render();
+        void renderGameOver();
 
         bool isFinished() const;
 
@@ -46,12 +47,14 @@ class SwimmyFish {
         bool hasCollision() const;
         void resetPipe(Pipe& pipe, float x);
         void updatePipes(float dt);
-        void drawPipes();
+        int16_t drawScene(bool dimmed);
+        void drawPipes(uint16_t color);
         void presentPipeRegion(const Pipe& previous, const Pipe& current);
 
         // General constants
         static constexpr float GRAVITY = 250;
         static constexpr uint16_t BACKGROUND = 0x409a;
+        static constexpr float JUMP_SPEED = -130;
 
         // Pipe constants
         static constexpr uint8_t PIPE_WIDTH = 18;

@@ -14,7 +14,7 @@ public:
     void init(bool accuracy = false);
     void update(unsigned score);
     unsigned value() const;
-    void render(uint16_t background = DisplayManager::Transparent);
+    void render(uint16_t background = DisplayManager::Transparent, uint16_t color = DisplayManager::White);
     // Record a completed round. init() preserves both high scores.
     void finish();
     // Draw and present the title and both high scores.

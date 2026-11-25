@@ -65,7 +65,8 @@ void Practice::update(float dt) {
 
     for (Note& note : notes_) {
         if (note.active) {
-            note.x -= NoteSpeed * dt;
+            // Move exactly two pixels per game frame.
+            note.x -= NoteStep;
         }
     }
 
@@ -73,8 +74,7 @@ void Practice::update(float dt) {
     while (spawnTimer_ <= 0.0f) {
         const float spawnTime = elapsed_ + spawnTimer_;
         if (spawnTime <= LastSpawnTime) {
-            // Account for the part of this frame since the scheduled spawn.
-            spawnNote(-spawnTimer_);
+            spawnNote();
         }
         spawnTimer_ += SpawnInterval;
     }
@@ -147,11 +147,11 @@ unsigned Practice::accuracyPercent() const {
     return attempts == 0 ? 0 : (hits_ * 100u) / attempts;
 }
 
-void Practice::spawnNote(float age) {
+void Practice::spawnNote() {
     for (Note& note : notes_) {
         if (!note.active) {
             note.color = static_cast<Color>(get_rand_32() % 4u);
-            note.x = DisplayManager::Width - NoteSpeed * age;
+            note.x = DisplayManager::Width;
             note.active = true;
             return;
         }
